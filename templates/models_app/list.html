@@ -35,14 +35,14 @@
 <div class="row">
     {% for model in models %}
     <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 {% if model.status == 'INACTIVE' %}border-secondary{% endif %}">
+        <div class="card h-100 {% if not model.is_active_by_dates %}border-secondary{% endif %}">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-person"></i> {{ model.full_name }}
-                    {% if model.status == 'INACTIVE' %}
-                    <span class="badge bg-secondary">Inactivo</span>
-                    {% else %}
+                    {% if model.is_active_by_dates %}
                     <span class="badge bg-success">Activo</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactivo</span>
                     {% endif %}
                 </h5>
                 <p class="card-text">
@@ -62,7 +62,7 @@
                 <a href="{% url 'models_app:detail' model.id %}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-eye"></i> Ver detalles
                 </a>
-                {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' and model.status == 'ACTIVE' and model.agency == user.agency %}
+                {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' and model.is_active_by_dates and model.agency == user.agency %}
                 <a href="{% url 'models_app:update' model.id %}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-pencil"></i> Editar
                 </a>

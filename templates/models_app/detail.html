@@ -16,7 +16,7 @@
                 <a href="{% url 'models_app:update' model.id %}" class="btn btn-primary">
                     <i class="bi bi-pencil"></i> Editar
                 </a>
-                {% if model.status == 'ACTIVE' %}
+                {% if model.is_active_by_dates %}
                 <a href="{% url 'models_app:deactivate' model.id %}" class="btn btn-danger">
                     <i class="bi bi-x-circle"></i> Desactivar
                 </a>
@@ -96,9 +96,14 @@
                     <tr>
                         <th>Estado:</th>
                         <td>
-                            <span class="badge bg-{% if model.status == 'ACTIVE' %}success{% else %}secondary{% endif %}">
-                                {{ model.get_status_display }}
-                            </span>
+                            {% if model.is_active_by_dates %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                            {% if model.status == 'ACTIVE' and not model.is_active_by_dates %}
+                            <br><small class="text-muted">(Fuera del período activo: fecha de ingreso o retiro)</small>
+                            {% endif %}
                         </td>
                     </tr>
                 </table>

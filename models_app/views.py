@@ -88,13 +88,15 @@ def model_list(request):
         models = Model.objects.all().order_by('-created_at')
         show_inactive = request.GET.get('show_inactive', 'false') == 'true'
         if not show_inactive:
-            models = models.filter(status=Model.Status.ACTIVE)
+            # Utiliser le manager qui filtre selon les dates d'entrée et de sortie
+            models = Model.active_by_dates.all().order_by('-created_at')
     elif request.user.is_regional_manager() and request.user.agency:
         # Regional Manager voit les modèles de son agence
         models = Model.objects.filter(agency=request.user.agency).order_by('-created_at')
         show_inactive = request.GET.get('show_inactive', 'false') == 'true'
         if not show_inactive:
-            models = models.filter(status=Model.Status.ACTIVE)
+            # Utiliser le manager qui filtre selon les dates d'entrée et de sortie
+            models = Model.active_by_dates.filter(agency=request.user.agency).order_by('-created_at')
     elif request.user.is_modele() and hasattr(request.user, 'model_profile'):
         # Modèle voit uniquement son profil
         models = Model.objects.filter(id=request.user.model_profile.id)
