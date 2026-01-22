@@ -49,18 +49,14 @@
                         </button>
                     </div>
                 </form>
-            </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Lista de Gastos</h5>
-                <span class="badge bg-danger">Total: ${{ total|floatformat:2 }} COP</span>
-            </div>
+    <div class="card-modern">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Lista de Gastos</h5>
+            <span class="badge bg-light text-dark">Total: ${{ total|floatformat:2 }} COP</span>
+        </div>
             <div class="card-body">
                 {% if expenses %}
                 <div class="table-responsive">
@@ -99,7 +95,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="alert alert-info">
+                <div class="alert alert-info alert-modern">
                     <i class="bi bi-info-circle"></i> No hay gastos registrados.
                     {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
                     <a href="{% url 'financial:expense_create' %}" class="alert-link">Registrar el primer gasto</a>

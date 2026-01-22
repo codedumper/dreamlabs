@@ -3,13 +3,13 @@
 {% block title %}Editar Modelo - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-pencil"></i> Editar Modelo: {{ model.full_name }}</h4>
-            </div>
-            <div class="card-body">
+<div class="page-container">
+    <div class="page-header">
+        <h1><i class="bi bi-pencil"></i> Editar Modelo: {{ model.full_name }}</h1>
+    </div>
+    
+    <div class="card-modern">
+        <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
                     {% if can_edit_agency and agencies|length > 0 %}
@@ -162,7 +162,7 @@
                     </div>
                     {% endif %}
                     
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'models_app:detail' model.id %}" class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </a>
@@ -171,7 +171,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
         </div>
     </div>
 </div>

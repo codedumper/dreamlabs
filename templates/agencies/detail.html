@@ -3,33 +3,34 @@
 {% block title %}{{ agency.name }} - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1><i class="bi bi-building"></i> {{ agency.name }}</h1>
+<div class="page-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
             <div>
-                <a href="{% url 'agencies:list' %}" class="btn btn-secondary">
+                <h1><i class="bi bi-building"></i> {{ agency.name }}</h1>
+            </div>
+            <div>
+                <a href="{% url 'agencies:list' %}" class="btn btn-light">
                     <i class="bi bi-arrow-left"></i> Volver
                 </a>
                 {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
-                <a href="{% url 'agencies:update' agency.id %}" class="btn btn-primary">
+                <a href="{% url 'agencies:update' agency.id %}" class="btn btn-light">
                     <i class="bi bi-pencil"></i> Editar
                 </a>
-                <a href="{% url 'agencies:bonus_rule_list' agency.id %}" class="btn btn-info">
+                <a href="{% url 'agencies:bonus_rule_list' agency.id %}" class="btn btn-light" style="background: rgba(59, 130, 246, 0.9);">
                     <i class="bi bi-gift"></i> Reglas de Bonus
                 </a>
                 {% endif %}
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Agencia</h5>
-            </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card-modern mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Agencia</h5>
+                </div>
             <div class="card-body">
                 <table class="table table-borderless">
                     <tr>
@@ -107,7 +108,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Estadísticas</h5>
             </div>
@@ -122,11 +123,11 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-people"></i> Modelos de la Agencia</h5>
                 {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
-                <a href="{% url 'models_app:create' %}" class="btn btn-sm btn-primary">
+                <a href="{% url 'models_app:create' %}" class="btn btn-sm btn-light">
                     <i class="bi bi-plus-circle"></i> Nuevo Modelo
                 </a>
                 {% endif %}
@@ -134,7 +135,7 @@
             <div class="card-body">
                 {% if models %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-modern">
                         <thead class="table-light">
                             <tr>
                                 <th>Nombre</th>
@@ -193,7 +194,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="alert alert-info">
+                <div class="alert alert-info alert-modern">
                     <i class="bi bi-info-circle"></i> No hay modelos registrados en esta agencia.
                     {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
                     <a href="{% url 'models_app:create' %}" class="alert-link">Crear el primer modelo</a>
@@ -203,5 +204,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}

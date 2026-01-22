@@ -3,46 +3,46 @@
 {% block title %}Modelos - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1><i class="bi bi-people"></i> Modelos</h1>
+<div class="page-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-people"></i> Modelos</h1>
+            </div>
             {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
-            <a href="{% url 'models_app:create' %}" class="btn btn-primary">
+            <a href="{% url 'models_app:create' %}" class="btn btn-light">
                 <i class="bi bi-plus-circle"></i> Nuevo Modelo
             </a>
             {% endif %}
         </div>
     </div>
-</div>
 
-<div class="row mb-3">
-    <div class="col-12">
-        {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="show_inactive" 
-                   onchange="window.location.href='?show_inactive=' + (this.checked ? 'true' : 'false')"
-                   {% if show_inactive %}checked{% endif %}>
-            <label class="form-check-label" for="show_inactive">
-                Mostrar modelos inactivos
-            </label>
+    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
+    <div class="card-modern mb-4">
+        <div class="card-body">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="show_inactive" 
+                       onchange="window.location.href='?show_inactive=' + (this.checked ? 'true' : 'false')"
+                       {% if show_inactive %}checked{% endif %}>
+                <label class="form-check-label" for="show_inactive">
+                    Mostrar modelos inactivos
+                </label>
+            </div>
         </div>
-        {% endif %}
     </div>
-</div>
+    {% endif %}
 
-{% if models %}
-<div class="row">
-    {% for model in models %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 {% if not model.is_active_by_dates %}border-secondary{% endif %}">
+    {% if models %}
+    <div class="card-grid">
+        {% for model in models %}
+        <div class="card-item">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-person"></i> {{ model.full_name }}
                     {% if model.is_active_by_dates %}
-                    <span class="badge bg-success">Activo</span>
+                    <span class="badge bg-success ms-2">Activo</span>
                     {% else %}
-                    <span class="badge bg-secondary">Inactivo</span>
+                    <span class="badge bg-secondary ms-2">Inactivo</span>
                     {% endif %}
                 </h5>
                 <p class="card-text">
@@ -54,7 +54,7 @@
                     <strong>Teléfono:</strong> {{ model.phone }}<br>
                     {% endif %}
                     {% if model.user %}
-                    <span class="badge bg-info">Tiene cuenta de usuario</span>
+                    <span class="badge bg-info mt-2">Tiene cuenta de usuario</span>
                     {% endif %}
                 </p>
             </div>
@@ -69,15 +69,15 @@
                 {% endif %}
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="alert alert-info">
-    <i class="bi bi-info-circle"></i> No hay modelos disponibles.
-    {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
-    <a href="{% url 'models_app:create' %}" class="alert-link">Crear el primer modelo</a>
+    {% else %}
+    <div class="alert alert-info alert-modern">
+        <i class="bi bi-info-circle"></i> No hay modelos disponibles.
+        {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
+        <a href="{% url 'models_app:create' %}" class="alert-link">Crear el primer modelo</a>
+        {% endif %}
+    </div>
     {% endif %}
 </div>
-{% endif %}
 {% endblock %}

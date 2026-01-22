@@ -4,26 +4,28 @@
 {% block title %}{{ model.full_name }} - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
+<div class="page-container">
+    <div class="page-header">
         <div class="d-flex justify-content-between align-items-center">
-            <h1><i class="bi bi-person"></i> {{ model.full_name }}</h1>
             <div>
-                <a href="{% url 'models_app:list' %}" class="btn btn-secondary">
+                <h1><i class="bi bi-person"></i> {{ model.full_name }}</h1>
+            </div>
+            <div>
+                <a href="{% url 'models_app:list' %}" class="btn btn-light">
                     <i class="bi bi-arrow-left"></i> Volver
                 </a>
                 {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' and model.agency == user.agency %}
-                <a href="{% url 'models_app:update' model.id %}" class="btn btn-primary">
+                <a href="{% url 'models_app:update' model.id %}" class="btn btn-light">
                     <i class="bi bi-pencil"></i> Editar
                 </a>
                 {% if model.is_active_by_dates %}
-                <a href="{% url 'models_app:deactivate' model.id %}" class="btn btn-danger">
+                <a href="{% url 'models_app:deactivate' model.id %}" class="btn btn-light" style="background: rgba(239, 68, 68, 0.9);">
                     <i class="bi bi-x-circle"></i> Desactivar
                 </a>
                 {% else %}
                 <form method="post" action="{% url 'models_app:reactivate' model.id %}" class="d-inline">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success" onclick="return confirm('¿Está seguro de reactivar este modelo?')">
+                    <button type="submit" class="btn btn-light" style="background: rgba(16, 185, 129, 0.9);" onclick="return confirm('¿Está seguro de reactivar este modelo?')">
                         <i class="bi bi-check-circle"></i> Reactivar
                     </button>
                 </form>
@@ -32,12 +34,11 @@
             </div>
         </div>
     </div>
-</div>
 
 {% comment %}Section 1: Informations du Modèle{% endcomment %}
 <div class="row mb-4">
     <div class="col-md-4">
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información Personal</h5>
             </div>
@@ -111,7 +112,7 @@
         </div>
         
         {% if model.user %}
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-person-badge"></i> Cuenta de Usuario</h5>
             </div>
@@ -175,7 +176,7 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-building"></i> Información de la Agencia</h5>
             </div>
@@ -185,7 +186,7 @@
             </div>
         </div>
 
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-laptop"></i> Plataforma</h5>
             </div>
@@ -215,7 +216,7 @@
         </div>
 
         {% if model.referred_by or model.referred_models.exists %}
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-people"></i> Referencias</h5>
             </div>
@@ -277,7 +278,7 @@
         </div>
         {% endif %}
 
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-calendar"></i> Información de Fechas</h5>
             </div>
@@ -294,7 +295,7 @@
             </div>
         </div>
 
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Horarios Asignados</h5>
             </div>
@@ -446,7 +447,7 @@
 
 {% if sessions_with_calculations %}
         {% comment %}Résumé des Statistiques{% endcomment %}
-        <div class="card border-info mb-3">
+        <div class="card-modern mb-3">
             <div class="card-header bg-info text-white py-2">
                 <h6 class="mb-0"><i class="bi bi-clock"></i> Resumen de Horas</h6>
             </div>
@@ -466,7 +467,7 @@
             </div>
         </div>
 
-        <div class="card border-success mb-3">
+        <div class="card-modern mb-3">
             <div class="card-header bg-success text-white py-2">
                 <h6 class="mb-0"><i class="bi bi-cash-stack"></i> Resumen Financiero</h6>
             </div>
@@ -496,7 +497,7 @@
         </div>
 
         {% comment %}Indicateurs de moyenne{% endcomment %}
-        <div class="card border-info mb-3">
+        <div class="card-modern mb-3">
             <div class="card-header bg-info text-white py-2">
                 <h6 class="mb-0"><i class="bi bi-graph-up"></i> Promedios</h6>
             </div>
@@ -532,7 +533,7 @@
         </div>
 
         {% comment %}Fórmula de cálculo (collapsible){% endcomment %}
-        <div class="card border-secondary mb-3">
+        <div class="card-modern mb-3">
             <div class="card-header bg-secondary text-white py-2" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#formulaCollapse" aria-expanded="false">
                 <h6 class="mb-0 small">
                     <i class="bi bi-info-circle"></i> Fórmula
@@ -954,4 +955,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
+</div>
 {% endblock %}

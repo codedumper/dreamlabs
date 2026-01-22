@@ -153,6 +153,105 @@ def dashboard_view(request):
                     'sessions_count': model_sessions.count(),
                 })
             
+            # ========== STATS FINANCIÈRES POUR LA PÉRIODE ==========
+            # Revenus totaux
+            total_revenues = Revenue.objects.filter(
+                date__gte=period_start,
+                date__lte=period_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Dépenses totales
+            total_expenses = Expense.objects.filter(
+                date__gte=period_start,
+                date__lte=period_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Salaires totaux
+            total_salaries = Salary.objects.filter(
+                payment_date__gte=period_start,
+                payment_date__lte=period_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Gains totaux des modèles (sessions complétées)
+            total_model_gains = WorkSession.objects.filter(
+                status=WorkSession.Status.COMPLETED,
+                date__gte=period_start,
+                date__lte=period_end
+            ).aggregate(total=Sum('session_gain_amount'))['total'] or 0
+            
+            # Gain total (revenus + gains des sessions)
+            total_gain = total_revenues + total_model_gains
+            
+            # Balance (revenus + gains modèles - dépenses - salaires)
+            balance = total_gain - total_expenses - total_salaries
+            
+            # ========== RÉPARTITION DES GAINS PAR AGENCE ==========
+            agencies_data = []
+            total_model_gains_all = 0
+            total_taxes_all = 0
+            
+            for agency in agencies:
+                # Gain total de l'agence (sessions complétées)
+                agency_gain_total = WorkSession.objects.filter(
+                    model__agency=agency,
+                    status=WorkSession.Status.COMPLETED,
+                    date__gte=period_start,
+                    date__lte=period_end
+                ).aggregate(total=Sum('session_gain_amount'))['total'] or 0
+                
+                # Revenus de l'agence
+                agency_revenues = Revenue.objects.filter(
+                    agency=agency,
+                    date__gte=period_start,
+                    date__lte=period_end
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                # Gain total (revenus + sessions)
+                agency_total_gain = agency_revenues + agency_gain_total
+                
+                # Calculer le pourcentage de gain des modèles
+                if agency_total_gain > 0 and agency.model_gain_percentage:
+                    agency_model_gain_amount = agency_total_gain * (agency.model_gain_percentage / 100)
+                else:
+                    agency_model_gain_amount = 0
+                
+                # Impôts (bank_fee_percentage)
+                if agency_total_gain > 0 and agency.bank_fee_percentage:
+                    agency_taxes = agency_total_gain * (agency.bank_fee_percentage / 100)
+                else:
+                    agency_taxes = 0
+                
+                # Autres dépenses de l'agence
+                agency_other_expenses = Expense.objects.filter(
+                    agency=agency,
+                    date__gte=period_start,
+                    date__lte=period_end
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                # Salaires de l'agence
+                agency_salaries = Salary.objects.filter(
+                    agency=agency,
+                    payment_date__gte=period_start,
+                    payment_date__lte=period_end
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                # Gain de l'entreprise (gain total - gains modèles - impôts - autres dépenses - salaires)
+                agency_company_gain = agency_total_gain - agency_model_gain_amount - agency_taxes - agency_other_expenses - agency_salaries
+                
+                agencies_data.append({
+                    'agency': agency,
+                    'total_gain': agency_total_gain,
+                    'model_gain': agency_model_gain_amount,
+                    'taxes': agency_taxes,
+                    'other_expenses': agency_other_expenses,
+                    'salaries': agency_salaries,
+                    'company_gain': agency_company_gain,
+                })
+                
+                # Accumuler les totaux
+                total_model_gains_all += agency_model_gain_amount
+                total_taxes_all += agency_taxes
+            
             context.update({
                 'total_gain_today': total_gain_today,
                 'total_sessions_today': total_sessions_today,
@@ -172,58 +271,52 @@ def dashboard_view(request):
                 'working_models_data': working_models_data,
                 'agencies': agencies,  # Pour le sélecteur d'agence
                 'today': today,
+                # Stats financières
+                'total_revenues': total_revenues,
+                'total_expenses': total_expenses,
+                'total_salaries': total_salaries,
+                'total_model_gains': total_model_gains,
+                'total_gain': total_gain,
+                'balance': balance,
+                # Répartition par agence
+                'agencies_data': agencies_data,
+                'total_model_gains_all': total_model_gains_all,
+                'total_taxes_all': total_taxes_all,
             })
             
             return render(request, 'accounts/dashboard_general_manager.html', context)
             
         elif request.user.is_regional_manager() and request.user.agency:
-            # Dashboard Regional Manager - Vue de son agence
+            # Dashboard Regional Manager - Vue de son agence (même structure que General Manager)
             agency = request.user.agency
             
-            # Dépenses
-            expenses = Expense.objects.filter(
-                agency=agency,
-                date__gte=period_start,
-                date__lte=period_end
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            # Date du jour pour les stats
+            today = timezone.now().date()
             
-            # Revenus
-            revenues = Revenue.objects.filter(
-                agency=agency,
-                date__gte=period_start,
-                date__lte=period_end
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            # Ganancia total del día (sessions complétées du jour pour cette agence)
+            today_completed_sessions = WorkSession.objects.filter(
+                status=WorkSession.Status.COMPLETED,
+                date=today,
+                model__agency=agency
+            )
             
-            # Salaires
-            salaries = Salary.objects.filter(
-                agency=agency,
-                payment_date__gte=period_start,
-                payment_date__lte=period_end
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            total_gain_today = today_completed_sessions.aggregate(
+                total=Sum('session_gain_amount')
+            )['total'] or 0
             
-            # Gains des modèles
-            model_gains = ModelGain.objects.filter(
-                model__agency=agency,
-                date__gte=period_start,
-                date__lte=period_end
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            # Stats des sessions de travail du jour (optimisé avec des agrégations)
+            today_sessions_qs = WorkSession.objects.filter(date=today, model__agency=agency)
             
-            # Bilan
-            balance = revenues - expenses - salaries
-            
-            # Statistiques des modèles
-            active_models = Model.active_by_dates.filter(agency=agency).count()
-            total_worked_hours = WorkedHours.objects.filter(
-                model__agency=agency,
-                date__gte=period_start,
-                date__lte=period_end
-            ).aggregate(total=Sum('hours'))['total'] or 0
-            
-            # Dernières dépenses
-            recent_expenses = Expense.objects.filter(agency=agency).order_by('-date')[:5]
-            
-            # Derniers revenus
-            recent_revenues = Revenue.objects.filter(agency=agency).order_by('-date')[:5]
+            total_sessions_today = today_sessions_qs.count()
+            late_count_today = today_sessions_qs.filter(late_minutes__gt=0).count()
+            absent_count_today = today_sessions_qs.filter(status=WorkSession.Status.ABSENT).count()
+            absent_approved_count_today = today_sessions_qs.filter(status=WorkSession.Status.ABSENT_APPROVED).count()
+            completed_count_today = today_sessions_qs.filter(status=WorkSession.Status.COMPLETED).count()
+            started_count_today = today_sessions_qs.filter(status=WorkSession.Status.STARTED).count()
+            on_break_count_today = today_sessions_qs.filter(status=WorkSession.Status.ON_BREAK).count()
+            on_meal_count_today = today_sessions_qs.filter(status=WorkSession.Status.ON_MEAL).count()
+            on_coaching_count_today = today_sessions_qs.filter(status=WorkSession.Status.ON_COACHING).count()
+            pending_count_today = today_sessions_qs.filter(status=WorkSession.Status.PENDING).count()
             
             # Liste des modèles qui travaillent aujourd'hui (ou date sélectionnée)
             working_date_str = request.GET.get('working_date')
@@ -231,9 +324,9 @@ def dashboard_view(request):
                 try:
                     working_date = datetime.strptime(working_date_str, '%Y-%m-%d').date()
                 except ValueError:
-                    working_date = timezone.now().date()
+                    working_date = today
             else:
-                working_date = timezone.now().date()
+                working_date = today
             
             # Récupérer les sessions de travail pour cette date
             work_sessions = WorkSession.objects.filter(
@@ -256,17 +349,24 @@ def dashboard_view(request):
                     'sessions_count': model_sessions.count(),
                 })
             
+            # Statistiques des modèles actifs
+            active_models = Model.active_by_dates.filter(agency=agency).count()
+            
             context.update({
                 'agency': agency,
-                'expenses': expenses,
-                'revenues': revenues,
-                'salaries': salaries,
-                'model_gains': model_gains,
-                'balance': balance,
+                'today': today,
+                'total_gain_today': total_gain_today,
+                'total_sessions_today': total_sessions_today,
+                'late_count_today': late_count_today,
+                'absent_count_today': absent_count_today,
+                'absent_approved_count_today': absent_approved_count_today,
+                'completed_count_today': completed_count_today,
+                'started_count_today': started_count_today,
+                'on_break_count_today': on_break_count_today,
+                'on_meal_count_today': on_meal_count_today,
+                'on_coaching_count_today': on_coaching_count_today,
+                'pending_count_today': pending_count_today,
                 'active_models': active_models,
-                'total_worked_hours': total_worked_hours,
-                'recent_expenses': recent_expenses,
-                'recent_revenues': recent_revenues,
                 'working_date': working_date,
                 'working_models_data': working_models_data,
             })

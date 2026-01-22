@@ -382,6 +382,104 @@
         </div>
     </div>
 
+    <!-- Stats financières pour la période -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="card stat-card stat-success h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-arrow-up-circle"></i> Ingresos Totales</h6>
+                    <div class="stat-value">${{ total_revenues|floatformat:0 }}</div>
+                    <div class="stat-currency">COP - Período</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card stat-info h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-cash-stack"></i> Ganancia Modelos</h6>
+                    <div class="stat-value">${{ total_model_gains|floatformat:0 }}</div>
+                    <div class="stat-currency">COP - Período</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card stat-danger h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-arrow-down-circle"></i> Gastos Totales</h6>
+                    <div class="stat-value">${{ total_expenses|floatformat:0 }}</div>
+                    <div class="stat-currency">COP - Período</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card stat-{% if balance >= 0 %}primary{% else %}danger{% endif %} h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-calculator"></i> Balance</h6>
+                    <div class="stat-value">${{ balance|floatformat:0 }}</div>
+                    <div class="stat-currency">COP - Período</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau de répartition des gains par agence -->
+    <div class="table-card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="bi bi-building"></i> Repartición de Ganancias por Agencia</h6>
+        </div>
+        <div class="card-body">
+            {% if agencies_data %}
+            <div class="table-responsive">
+                <table class="table compact-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Agencia</th>
+                            <th class="text-end table-gain-total">Ganancia Total</th>
+                            <th class="text-end table-gain-modelos">Ganancia Modelos</th>
+                            <th class="text-end table-impuestos">Impuestos</th>
+                            <th class="text-end table-otros-gastos">Otros Gastos</th>
+                            <th class="text-end table-salarios">Salarios</th>
+                            <th class="text-end table-ganancia-empresa">Ganancia Empresa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in agencies_data %}
+                        <tr>
+                            <td><strong>{{ data.agency.name }}</strong></td>
+                            <td class="text-end table-gain-total">${{ data.total_gain|floatformat:0 }}</td>
+                            <td class="text-end table-gain-modelos">${{ data.model_gain|floatformat:0 }}</td>
+                            <td class="text-end table-impuestos">${{ data.taxes|floatformat:0 }}</td>
+                            <td class="text-end table-otros-gastos">${{ data.other_expenses|floatformat:0 }}</td>
+                            <td class="text-end table-salarios">${{ data.salaries|floatformat:0 }}</td>
+                            <td class="text-end table-ganancia-empresa {% if data.company_gain < 0 %}negative{% endif %}">
+                                ${{ data.company_gain|floatformat:0 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); font-weight: 700;">
+                            <td><strong>TOTAL</strong></td>
+                            <td class="text-end table-gain-total">${{ total_gain|floatformat:0 }}</td>
+                            <td class="text-end table-gain-modelos">${{ total_model_gains_all|floatformat:0 }}</td>
+                            <td class="text-end table-impuestos">${{ total_taxes_all|floatformat:0 }}</td>
+                            <td class="text-end table-otros-gastos">${{ total_expenses|floatformat:0 }}</td>
+                            <td class="text-end table-salarios">${{ total_salaries|floatformat:0 }}</td>
+                            <td class="text-end table-ganancia-empresa {% if balance < 0 %}negative{% endif %}">
+                                ${{ balance|floatformat:0 }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i> No hay datos financieros para el período seleccionado.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Modelos que trabajan hoy -->
     <div class="table-card mb-4">
         <div class="card-header">

@@ -3,21 +3,20 @@
 {% block title %}Usuarios - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1><i class="bi bi-people"></i> Usuarios</h1>
-            <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">
+<div class="page-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-people-fill"></i> Usuarios</h1>
+            </div>
+            <a href="{% url 'accounts:user_create' %}" class="btn btn-light">
                 <i class="bi bi-plus-circle"></i> Nuevo Usuario
             </a>
         </div>
     </div>
-</div>
 
-<div class="row mb-3">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
+    <div class="card-modern mb-4">
+        <div class="card-body">
                 <form method="get" class="row g-3">
                     <div class="col-md-3">
                         <label for="role" class="form-label">Rol</label>
@@ -55,44 +54,40 @@
                         </a>
                     </div>
                 </form>
-            </div>
         </div>
     </div>
-</div>
 
-<div class="row mb-3">
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Total Usuarios</h5>
-                <h3 class="text-primary">{{ total_users }}</h3>
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card-modern text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-people"></i> Total Usuarios</h5>
+                    <h3 class="text-primary">{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-modern text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-check-circle"></i> Activos</h5>
+                    <h3 class="text-success">{{ active_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-modern text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-x-circle"></i> Inactivos</h5>
+                    <h3 class="text-secondary">{{ inactive_users }}</h3>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Activos</h5>
-                <h3 class="text-success">{{ active_users }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Inactivos</h5>
-                <h3 class="text-secondary">{{ inactive_users }}</h3>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Lista de Usuarios</h5>
-            </div>
+    <div class="card-modern">
+        <div class="card-header">
+            <h5 class="mb-0">Lista de Usuarios</h5>
+        </div>
             <div class="card-body">
                 {% if users %}
                 <div class="table-responsive">
@@ -178,7 +173,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="alert alert-info text-center">
+                <div class="alert alert-info alert-modern text-center">
                     <i class="bi bi-info-circle"></i> No se encontraron usuarios con los filtros seleccionados.
                 </div>
                 {% endif %}

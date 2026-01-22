@@ -3,13 +3,13 @@
 {% block title %}Nuevo Horario - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-plus-circle"></i> Nuevo Horario</h4>
-            </div>
-            <div class="card-body">
+<div class="page-container">
+    <div class="page-header">
+        <h1><i class="bi bi-plus-circle"></i> Nuevo Horario</h1>
+    </div>
+    
+    <div class="card-modern">
+        <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
                     {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
@@ -92,7 +92,7 @@
                             <br><strong>Nota:</strong> El inicio y fin del descanso se registran mediante botones durante la sesión de trabajo.
                         </small>
                     </div>
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'models_app:schedule_list' %}" class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </a>
@@ -101,7 +101,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
         </div>
     </div>
 </div>

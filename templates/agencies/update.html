@@ -4,13 +4,13 @@
 {% block title %}Editar Agencia - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-pencil"></i> Editar Agencia: {{ agency.name }}</h4>
-            </div>
-            <div class="card-body">
+<div class="page-container">
+    <div class="page-header">
+        <h1><i class="bi bi-pencil"></i> Editar Agencia: {{ agency.name }}</h1>
+    </div>
+    
+    <div class="card-modern">
+        <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
@@ -101,7 +101,7 @@
                             <small class="form-text text-muted">Monto de la multa aplicada cuando un modelo no se presenta</small>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'agencies:detail' agency.id %}" class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </a>
@@ -110,7 +110,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
         </div>
     </div>
 </div>
