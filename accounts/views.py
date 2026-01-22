@@ -224,6 +224,37 @@ def dashboard_view(request):
             # Derniers revenus
             recent_revenues = Revenue.objects.filter(agency=agency).order_by('-date')[:5]
             
+            # Liste des modèles qui travaillent aujourd'hui (ou date sélectionnée)
+            working_date_str = request.GET.get('working_date')
+            if working_date_str:
+                try:
+                    working_date = datetime.strptime(working_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    working_date = timezone.now().date()
+            else:
+                working_date = timezone.now().date()
+            
+            # Récupérer les sessions de travail pour cette date
+            work_sessions = WorkSession.objects.filter(
+                model__agency=agency,
+                date=working_date
+            ).select_related('model', 'schedule_assignment', 'schedule_assignment__schedule').order_by('model__first_name', 'model__last_name')
+            
+            # Récupérer les modèles uniques qui travaillent ce jour
+            working_models = Model.objects.filter(
+                id__in=work_sessions.values_list('model_id', flat=True).distinct()
+            ).order_by('first_name', 'last_name')
+            
+            # Préparer les données des modèles avec leurs sessions
+            working_models_data = []
+            for model in working_models:
+                model_sessions = work_sessions.filter(model=model)
+                working_models_data.append({
+                    'model': model,
+                    'sessions': model_sessions,
+                    'sessions_count': model_sessions.count(),
+                })
+            
             context.update({
                 'agency': agency,
                 'expenses': expenses,
@@ -235,6 +266,8 @@ def dashboard_view(request):
                 'total_worked_hours': total_worked_hours,
                 'recent_expenses': recent_expenses,
                 'recent_revenues': recent_revenues,
+                'working_date': working_date,
+                'working_models_data': working_models_data,
             })
             
             return render(request, 'accounts/dashboard_regional_manager.html', context)

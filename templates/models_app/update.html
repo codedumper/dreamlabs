@@ -91,6 +91,18 @@
                             <input type="text" class="form-control" id="security_contact_phone" name="security_contact_phone" value="{{ model.security_contact_phone|default:'' }}">
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label for="referred_by" class="form-label">Referido por</label>
+                        <select class="form-select" id="referred_by" name="referred_by">
+                            <option value="">Ninguno (opcional)</option>
+                            {% for available_model in available_models %}
+                            <option value="{{ available_model.id }}" {% if model.referred_by and model.referred_by.id == available_model.id %}selected{% endif %}>
+                                {{ available_model.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Seleccione el modelo que refirió a este modelo (opcional).</small>
+                    </div>
                     <div class="card border-secondary mb-3">
                         <div class="card-header bg-secondary text-white">
                             <h6 class="mb-0"><i class="bi bi-laptop"></i> Plataforma</h6>

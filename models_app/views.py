@@ -567,6 +567,7 @@ def model_create(request):
         fecha_ingreso = request.POST.get('fecha_ingreso', '').strip()
         fecha_retiro = request.POST.get('fecha_retiro', '').strip()
         create_user_account = request.POST.get('create_user_account') == 'on'
+        referred_by_id = request.POST.get('referred_by', '').strip()
         
         # Pour admin/general manager, récupérer l'agence depuis le formulaire
         if can_choose_agency and not agency:
@@ -601,6 +602,14 @@ def model_create(request):
                 
                 logger.info(f"Creating model: {first_name} {last_name}, agency: {agency.name}, fecha_ingreso: {fecha_ingreso_date}")
                 
+                # Récupérer le modèle référent si fourni
+                referred_by = None
+                if referred_by_id:
+                    try:
+                        referred_by = Model.objects.get(id=referred_by_id, agency=agency)
+                    except Model.DoesNotExist:
+                        logger.warning(f"Referred model {referred_by_id} not found for agency {agency.id}")
+                
                 model = Model.objects.create(
                     first_name=first_name,
                     last_name=last_name,
@@ -616,7 +625,8 @@ def model_create(request):
                     fecha_ingreso=fecha_ingreso_date,
                     fecha_retiro=fecha_retiro_date,
                     agency=agency,
-                    status=Model.Status.ACTIVE
+                    status=Model.Status.ACTIVE,
+                    referred_by=referred_by
                 )
                 
                 logger.info(f"Model created successfully with ID: {model.id}")
@@ -670,17 +680,30 @@ def model_create(request):
     if can_choose_agency:
         # Admin et General Manager : afficher toutes les agences
         agencies = Agency.objects.all()
+        # Pour le sélecteur de modèle référent, on affiche tous les modèles actifs
+        # Si une agence est sélectionnée, filtrer par cette agence
+        if agency:
+            available_models = Model.active_by_dates.filter(agency=agency).order_by('first_name', 'last_name')
+        else:
+            available_models = Model.active_by_dates.all().order_by('first_name', 'last_name')
         context = {
             'agencies': agencies,
             'agency': agency,
             'can_choose_agency': True,
+            'available_models': available_models,
         }
     else:
         # Regional Manager : agence fixe
+        # Pour le sélecteur de modèle référent, filtrer par l'agence du Regional Manager
+        if agency:
+            available_models = Model.active_by_dates.filter(agency=agency).order_by('first_name', 'last_name')
+        else:
+            available_models = Model.objects.none()
         context = {
             'agencies': [],
             'agency': agency,
             'can_choose_agency': False,
+            'available_models': available_models,
         }
     
     # Si c'est une requête POST avec erreurs, passer les valeurs du formulaire au contexte
@@ -737,6 +760,7 @@ def model_update(request, model_id):
         eps = request.POST.get('eps', '')
         fecha_ingreso = request.POST.get('fecha_ingreso', '')
         fecha_retiro = request.POST.get('fecha_retiro', '')
+        referred_by_id = request.POST.get('referred_by', '').strip()
         
         # Gestion de l'utilisateur
         manage_user = request.POST.get('manage_user', '')
@@ -775,6 +799,17 @@ def model_update(request, model_id):
                 model.eps = eps if eps else None
                 model.fecha_ingreso = fecha_ingreso_date
                 model.fecha_retiro = fecha_retiro_date
+                
+                # Mettre à jour le modèle référent
+                if referred_by_id:
+                    try:
+                        referred_by = Model.objects.get(id=referred_by_id, agency=model.agency)
+                        model.referred_by = referred_by
+                    except Model.DoesNotExist:
+                        model.referred_by = None
+                else:
+                    model.referred_by = None
+                
                 model.save()
                 
                 # Gérer l'utilisateur associé
@@ -825,10 +860,15 @@ def model_update(request, model_id):
     else:
         agencies = []
     
+    # Récupérer les modèles disponibles pour le sélecteur de modèle référent
+    # Exclure le modèle actuel pour éviter une auto-référence
+    available_models = Model.active_by_dates.filter(agency=model.agency).exclude(id=model.id).order_by('first_name', 'last_name')
+    
     context = {
         'model': model,
         'agencies': agencies,
         'can_edit_agency': can_edit_agency,
+        'available_models': available_models,
     }
     return render(request, 'models_app/update.html', context)
 

@@ -102,6 +102,103 @@
     </div>
 </div>
 
+<!-- Modelos que trabajan hoy -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-people-fill"></i> Modelos que Trabajan</h5>
+                    <form method="get" class="d-inline-flex align-items-center gap-2">
+                        <input type="hidden" name="period_start" value="{{ period_start|date:'Y-m-d' }}">
+                        <input type="hidden" name="period_end" value="{{ period_end|date:'Y-m-d' }}">
+                        <label for="working_date" class="form-label mb-0">Fecha:</label>
+                        <input type="date" class="form-control form-control-sm" id="working_date" name="working_date" 
+                               value="{{ working_date|date:'Y-m-d' }}" onchange="this.form.submit()" style="width: auto;">
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if working_models_data %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Horario(s)</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in working_models_data %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.model.full_name }}</strong>
+                                    {% if item.model.email %}
+                                    <br><small class="text-muted">{{ item.model.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% for session in item.sessions %}
+                                    <div class="mb-1">
+                                        {% if session.schedule_assignment and session.schedule_assignment.schedule %}
+                                        <span class="badge bg-info">
+                                            {{ session.schedule_assignment.schedule.name }}
+                                            ({{ session.schedule_assignment.schedule.start_time|time:"H:i" }} - {{ session.schedule_assignment.schedule.end_time|time:"H:i" }})
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Sin horario asignado</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for session in item.sessions %}
+                                    <div class="mb-1">
+                                        {% if session.status == 'COMPLETED' %}
+                                        <span class="badge bg-success">Completada</span>
+                                        {% elif session.status == 'STARTED' %}
+                                        <span class="badge bg-primary">Iniciada</span>
+                                        {% elif session.status == 'ON_BREAK' %}
+                                        <span class="badge bg-warning">En Pausa</span>
+                                        {% elif session.status == 'ON_MEAL' %}
+                                        <span class="badge bg-warning">En Descanso</span>
+                                        {% elif session.status == 'ON_COACHING' %}
+                                        <span class="badge bg-info">En Coaching</span>
+                                        {% elif session.status == 'ABSENT' %}
+                                        <span class="badge bg-danger">Ausente</span>
+                                        {% elif session.status == 'ABSENT_APPROVED' %}
+                                        <span class="badge bg-secondary">Ausente Aprobada</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Pendiente</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'models_app:detail' item.model.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'models_app:work_session_list' %}?date={{ working_date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-info" title="Ver sesiones">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i> No hay modelos trabajando el {{ working_date|date:"d/m/Y" }}.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Actividad reciente -->
 <div class="row">
     <div class="col-md-6">

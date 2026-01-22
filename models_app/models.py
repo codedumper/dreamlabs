@@ -119,6 +119,17 @@ class Model(models.Model):
         verbose_name=_('Agencia')
     )
     
+    # Modèle référent (qui a référencé ce modèle)
+    referred_by = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='referred_models',
+        verbose_name=_('Referido por'),
+        help_text=_('Modelo que refirió a este modelo')
+    )
+    
     # Statut
     status = models.CharField(
         max_length=10,
