@@ -77,89 +77,35 @@ def dashboard_view(request):
     # Dashboard selon le rôle
     if request.user.role:
         if request.user.is_general_manager():
-            # Dashboard General Manager - Vue consolidée des 2 agences
+            # Dashboard General Manager - Stats du jour et sessions de travail
             agencies = Agency.objects.all()
-            agencies_data = []
             
-            # Calculer les nouveaux indicateurs basés sur WorkSession
-            completed_sessions = WorkSession.objects.filter(
+            # Date du jour pour les stats
+            today = timezone.now().date()
+            
+            # Ganancia total del día (sessions complétées du jour)
+            today_completed_sessions = WorkSession.objects.filter(
                 status=WorkSession.Status.COMPLETED,
-                date__gte=period_start,
-                date__lte=period_end
+                date=today
             )
             
-            # Ganancia total (somme de toutes les session_gain_amount)
-            total_gain = completed_sessions.aggregate(
+            total_gain_today = today_completed_sessions.aggregate(
                 total=Sum('session_gain_amount')
             )['total'] or 0
             
-            # Ganancia de los modelos (somme de toutes les session_model_ganancia)
-            total_model_gain = completed_sessions.aggregate(
-                total=Sum('session_model_ganancia')
-            )['total'] or 0
+            # Stats des sessions de travail du jour (optimisé avec des agrégations)
+            today_sessions_qs = WorkSession.objects.filter(date=today)
             
-            # Impuestos (somme de toutes les session_bank_fees)
-            total_bank_fees = completed_sessions.aggregate(
-                total=Sum('session_bank_fees')
-            )['total'] or 0
-            
-            # Otros gastos (somme de toutes les Expense)
-            total_other_expenses = Expense.objects.filter(
-                date__gte=period_start,
-                date__lte=period_end
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            
-            # Salarios (somme de toutes les Salary)
-            total_salaries = Salary.objects.filter(
-                payment_date__gte=period_start,
-                payment_date__lte=period_end
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            
-            # Ganancia de la empresa
-            # = Ganancia total - Impuestos - Ganancia de los modelos - Otros gastos - Salarios
-            company_gain = total_gain - total_bank_fees - total_model_gain - total_other_expenses - total_salaries
-            
-            # Données par agence pour le tableau
-            for agency in agencies:
-                # Sessions complétées de l'agence
-                agency_sessions = completed_sessions.filter(model__agency=agency)
-                
-                agency_gain = agency_sessions.aggregate(
-                    total=Sum('session_gain_amount')
-                )['total'] or 0
-                
-                agency_model_gain = agency_sessions.aggregate(
-                    total=Sum('session_model_ganancia')
-                )['total'] or 0
-                
-                agency_bank_fees = agency_sessions.aggregate(
-                    total=Sum('session_bank_fees')
-                )['total'] or 0
-                
-                agency_other_expenses = Expense.objects.filter(
-                    agency=agency,
-                    date__gte=period_start,
-                    date__lte=period_end
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                
-                agency_salaries = Salary.objects.filter(
-                    agency=agency,
-                    payment_date__gte=period_start,
-                    payment_date__lte=period_end
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                
-                agency_company_gain = agency_gain - agency_bank_fees - agency_model_gain - agency_other_expenses - agency_salaries
-                
-                agencies_data.append({
-                    'agency': agency,
-                    'gain': agency_gain,
-                    'model_gain': agency_model_gain,
-                    'bank_fees': agency_bank_fees,
-                    'other_expenses': agency_other_expenses,
-                    'salaries': agency_salaries,
-                    'company_gain': agency_company_gain,
-                    'active_models': Model.active_by_dates.filter(agency=agency).count(),
-                })
+            total_sessions_today = today_sessions_qs.count()
+            late_count_today = today_sessions_qs.filter(late_minutes__gt=0).count()
+            absent_count_today = today_sessions_qs.filter(status=WorkSession.Status.ABSENT).count()
+            absent_approved_count_today = today_sessions_qs.filter(status=WorkSession.Status.ABSENT_APPROVED).count()
+            completed_count_today = today_sessions_qs.filter(status=WorkSession.Status.COMPLETED).count()
+            started_count_today = today_sessions_qs.filter(status=WorkSession.Status.STARTED).count()
+            on_break_count_today = today_sessions_qs.filter(status=WorkSession.Status.ON_BREAK).count()
+            on_meal_count_today = today_sessions_qs.filter(status=WorkSession.Status.ON_MEAL).count()
+            on_coaching_count_today = today_sessions_qs.filter(status=WorkSession.Status.ON_COACHING).count()
+            pending_count_today = today_sessions_qs.filter(status=WorkSession.Status.PENDING).count()
             
             # Liste des modèles qui travaillent aujourd'hui (ou date sélectionnée)
             working_date_str = request.GET.get('working_date')
@@ -208,19 +154,24 @@ def dashboard_view(request):
                 })
             
             context.update({
-                'agencies_data': agencies_data,
-                'total_gain': total_gain,
-                'total_model_gain': total_model_gain,
-                'total_bank_fees': total_bank_fees,
-                'total_other_expenses': total_other_expenses,
-                'total_salaries': total_salaries,
-                'company_gain': company_gain,
+                'total_gain_today': total_gain_today,
+                'total_sessions_today': total_sessions_today,
+                'late_count_today': late_count_today,
+                'absent_count_today': absent_count_today,
+                'absent_approved_count_today': absent_approved_count_today,
+                'completed_count_today': completed_count_today,
+                'started_count_today': started_count_today,
+                'on_break_count_today': on_break_count_today,
+                'on_meal_count_today': on_meal_count_today,
+                'on_coaching_count_today': on_coaching_count_today,
+                'pending_count_today': pending_count_today,
                 'total_agencies': agencies.count(),
                 'total_active_models': Model.active_by_dates.count(),
                 'working_date': working_date,
                 'working_agency': working_agency,
                 'working_models_data': working_models_data,
                 'agencies': agencies,  # Pour le sélecteur d'agence
+                'today': today,
             })
             
             return render(request, 'accounts/dashboard_general_manager.html', context)

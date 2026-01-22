@@ -4,186 +4,382 @@
 {% block title %}Mi Tablero - Dreamslabs Manager{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h1><i class="bi bi-speedometer2"></i> Mi Tablero</h1>
-        <p class="text-muted">Bienvenido, {{ model.full_name }}</p>
-    </div>
-</div>
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding-top: 0;
+    }
+    .dashboard-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        margin-top: 20px;
+    }
+    .stat-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    }
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    .stat-card .card-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .stat-card .card-title i {
+        font-size: 1.2rem;
+        opacity: 0.8;
+    }
+    .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .stat-card.stat-success {
+        --gradient-start: #10b981;
+        --gradient-end: #059669;
+    }
+    .stat-card.stat-success .card-title i { color: #10b981; }
+    .stat-card.stat-info {
+        --gradient-start: #3b82f6;
+        --gradient-end: #2563eb;
+    }
+    .stat-card.stat-info .card-title i { color: #3b82f6; }
+    .stat-card.stat-warning {
+        --gradient-start: #f59e0b;
+        --gradient-end: #d97706;
+    }
+    .stat-card.stat-warning .card-title i { color: #f59e0b; }
+    .stat-card.stat-danger {
+        --gradient-start: #ef4444;
+        --gradient-end: #dc2626;
+    }
+    .stat-card.stat-danger .card-title i { color: #ef4444; }
+    .stat-card.stat-secondary {
+        --gradient-start: #6b7280;
+        --gradient-end: #4b5563;
+    }
+    .stat-card.stat-secondary .card-title i { color: #6b7280; }
+    .stat-card.stat-primary {
+        --gradient-start: #8b5cf6;
+        --gradient-end: #7c3aed;
+    }
+    .stat-card.stat-primary .card-title i { color: #8b5cf6; }
+    .stat-card .stat-currency {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px 25px;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    .dashboard-header h4 {
+        color: white;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .dashboard-header small {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .filter-card {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+    .table-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+    .table-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 20px;
+    }
+    .table-card .card-header h5, .table-card .card-header h6 {
+        color: white;
+        font-weight: 700;
+        margin: 0;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 8px 20px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .table-modern {
+        font-size: 0.9rem;
+    }
+    .table-modern thead {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    .table-modern th {
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 1rem 0.75rem;
+        border-bottom: 3px solid #dee2e6;
+        color: #495057;
+    }
+    .table-modern tbody tr {
+        transition: all 0.2s;
+    }
+    .table-modern tbody tr:hover {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transform: scale(1.01);
+    }
+    .table-modern td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+</style>
 
-<!-- Filtros de período -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <form method="get" class="row g-3">
-                    <div class="col-md-4">
-                        <label for="period_start" class="form-label">Desde</label>
-                        <input type="date" class="form-control" id="period_start" name="period_start" 
-                               value="{{ period_start|date:'Y-m-d' }}">
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4><i class="bi bi-speedometer2"></i> Mi Tablero</h4>
+                <small>Bienvenido, {{ model.full_name }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de período -->
+    <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="period_start" class="form-label fw-semibold mb-2">Desde</label>
+                <input type="date" class="form-control" id="period_start" name="period_start" 
+                       value="{{ period_start|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="period_end" class="form-label fw-semibold mb-2">Hasta</label>
+                <input type="date" class="form-control" id="period_end" name="period_end" 
+                       value="{{ period_end|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Indicadores personales -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card stat-card stat-success h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-cash-stack"></i> Ganancias Totales</h6>
+                    <div class="stat-value">${{ total_gains|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card stat-info h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-clock"></i> Horas Trabajadas</h6>
+                    <div class="stat-value">{{ total_hours|floatformat:1 }}</div>
+                    <div class="stat-currency">Horas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card stat-primary h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-graph-up"></i> Promedio Horas/Día</h6>
+                    <div class="stat-value">{{ avg_hours|floatformat:1 }}</div>
+                    <div class="stat-currency">Horas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Horarios Asignados -->
+    <div class="table-card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Horarios Asignados</h5>
+        </div>
+        <div class="card-body">
+            {% if schedule_assignments %}
+            <div class="table-responsive">
+                <table class="table table-modern mb-0">
+                    <thead>
+                        <tr>
+                            <th>Horario</th>
+                            <th>Días</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in schedule_assignments %}
+                        <tr>
+                            <td>
+                                <strong>{{ assignment.schedule.name }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ assignment.schedule.start_time|time:"H:i" }} - {{ assignment.schedule.end_time|time:"H:i" }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if assignment.schedule.week_days %}
+                                <small>{{ assignment.schedule.get_week_days_display }}</small>
+                                {% else %}
+                                <span class="badge bg-secondary">Todos</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if assignment.is_active %}success{% else %}secondary{% endif %}">
+                                    {% if assignment.is_active %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center mb-0">
+                <i class="bi bi-info-circle"></i> No hay horarios asignados.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actividad reciente -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Ganancias Recientes</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_gains %}
+                    <div class="table-responsive">
+                        <table class="table table-modern mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Monto</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for gain in recent_gains %}
+                                <tr>
+                                    <td>{{ gain.date|date:"d/m/Y" }}</td>
+                                    <td class="text-end">
+                                        <strong class="text-success">${{ gain.amount|floatformat:2 }} COP</strong>
+                                    </td>
+                                    <td>{{ gain.description|truncatewords:5|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-4">
-                        <label for="period_end" class="form-label">Hasta</label>
-                        <input type="date" class="form-control" id="period_end" name="period_end" 
-                               value="{{ period_end|date:'Y-m-d' }}">
+                    {% else %}
+                    <p class="text-muted text-center mb-0">No hay ganancias registradas</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock"></i> Horas Trabajadas Recientes</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_hours %}
+                    <div class="table-responsive">
+                        <table class="table table-modern mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Horas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hour in recent_hours %}
+                                <tr>
+                                    <td>{{ hour.date|date:"d/m/Y" }}</td>
+                                    <td class="text-end">
+                                        <strong>{{ hour.hours|floatformat:2 }}h</strong>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-funnel"></i> Filtrar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Indicadores personales -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-cash-stack"></i> Ganancias Totales</h5>
-                <h2 class="mb-0">${{ total_gains|floatformat:2 }} COP</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-clock"></i> Horas Trabajadas</h5>
-                <h2 class="mb-0">{{ total_hours|floatformat:1 }}h</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-graph-up"></i> Promedio Horas/Día</h5>
-                <h2 class="mb-0">{{ avg_hours|floatformat:1 }}h</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Horarios Asignados -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Horarios Asignados</h5>
-            </div>
-            <div class="card-body">
-                {% if schedule_assignments %}
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Horario</th>
-                                <th>Días</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for assignment in schedule_assignments %}
-                            <tr>
-                                <td>
-                                    <strong>{{ assignment.schedule.name }}</strong>
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ assignment.schedule.start_time|time:"H:i" }} - {{ assignment.schedule.end_time|time:"H:i" }}
-                                    </small>
-                                </td>
-                                <td>
-                                    {% if assignment.schedule.week_days %}
-                                    <small>{{ assignment.schedule.get_week_days_display }}</small>
-                                    {% else %}
-                                    <span class="badge bg-secondary">Todos</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-{% if assignment.is_active %}success{% else %}secondary{% endif %}">
-                                        {% if assignment.is_active %}Activo{% else %}Inactivo{% endif %}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">No hay horas registradas</p>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="alert alert-info text-center mb-0">
-                    <i class="bi bi-info-circle"></i> No hay horarios asignados.
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Actividad reciente -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="bi bi-cash-stack"></i> Ganancias Recientes</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_gains %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Monto</th>
-                                <th>Descripción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for gain in recent_gains %}
-                            <tr>
-                                <td>{{ gain.date|date:"d/m/Y" }}</td>
-                                <td><strong class="text-success">${{ gain.amount|floatformat:2 }} COP</strong></td>
-                                <td>{{ gain.description|truncatewords:5|default:"-" }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted">No hay ganancias registradas</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="bi bi-clock"></i> Horas Trabajadas Recientes</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_hours %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Horas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for hour in recent_hours %}
-                            <tr>
-                                <td>{{ hour.date|date:"d/m/Y" }}</td>
-                                <td><strong>{{ hour.hours|floatformat:2 }}h</strong></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted">No hay horas registradas</p>
-                {% endif %}
             </div>
         </div>
     </div>

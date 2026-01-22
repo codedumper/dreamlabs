@@ -21,7 +21,7 @@
                     <div class="col-md-3">
                         <label for="agency" class="form-label">Agencia</label>
                         <select class="form-select" id="agency" name="agency" onchange="this.form.submit()">
-                            <option value="">Seleccionar agencia</option>
+                            <option value="" {% if not agency %}selected{% endif %}>Todas las agencias</option>
                             {% for ag in agencies %}
                             <option value="{{ ag.id }}" {% if agency and ag.id == agency.id %}selected{% endif %}>
                                 {{ ag.name }}
@@ -88,13 +88,16 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">Sesiones del {{ selected_date|date:"d/m/Y" }}{% if agency %} - {{ agency.name }}{% endif %}</h5>
+                <h5 class="mb-0">Sesiones del {{ selected_date|date:"d/m/Y" }}{% if agency %} - {{ agency.name }}{% elif show_all_agencies %} - Todas las agencias{% endif %}</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                {% if show_all_agencies %}
+                                <th>Agencia</th>
+                                {% endif %}
                                 <th>Modelo</th>
                                 <th>Horario</th>
                                 <th>Estado</th>
@@ -113,6 +116,11 @@
                         <tbody>
                             {% for session in sessions %}
                             <tr {% if session.is_active %}class="table-info"{% endif %}>
+                                {% if show_all_agencies %}
+                                <td>
+                                    <span class="badge bg-info">{{ session.model.agency.name }}</span>
+                                </td>
+                                {% endif %}
                                 <td>
                                     <div class="d-flex align-items-center">
                                         {% if session.is_active %}

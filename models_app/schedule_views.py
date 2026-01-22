@@ -354,12 +354,17 @@ def _get_redirect_url_for_session(session, request):
 def work_session_list(request):
     """Liste des sessions de travail pour une date"""
     agency = None
+    show_all_agencies = False
+    
     if request.user.is_superuser or request.user.is_general_manager():
         agency_id = request.GET.get('agency')
         if agency_id:
             agency = get_object_or_404(Agency, id=agency_id)
         elif request.user.agency:
             agency = request.user.agency
+        else:
+            # Pour admin/superuser, si aucune agence n'est sélectionnée, afficher toutes les agences
+            show_all_agencies = True
     elif request.user.is_regional_manager():
         agency = request.user.agency
     
@@ -372,11 +377,55 @@ def work_session_list(request):
     else:
         selected_date = timezone.now().date()
     
-    if agency:
-        weekday_number = selected_date.weekday()
-        weekday_names = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-        current_weekday = weekday_names[weekday_number]
+    weekday_number = selected_date.weekday()
+    weekday_names = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+    current_weekday = weekday_names[weekday_number]
+    
+    if show_all_agencies:
+        # Récupérer les sessions de toutes les agences
+        sessions = WorkSession.objects.filter(
+            date=selected_date
+        ).select_related('model', 'model__agency', 'schedule_assignment', 'schedule_assignment__schedule').order_by('model__agency__name', 'schedule_assignment__schedule__start_time', 'model__first_name')
         
+        # Créer les sessions manquantes pour toutes les agences
+        all_agencies = Agency.objects.all()
+        for ag in all_agencies:
+            assignments = ScheduleAssignment.objects.filter(
+                schedule__agency=ag,
+                is_active=True
+            ).select_related('model', 'schedule')
+            
+            for assignment in assignments:
+                # Vérifier que le modèle est disponible à la date sélectionnée
+                model = assignment.model
+                if model.fecha_ingreso and model.fecha_ingreso > selected_date:
+                    continue
+                if model.fecha_retiro and model.fecha_retiro < selected_date:
+                    continue
+                
+                schedule = assignment.schedule
+                if schedule.week_days:
+                    week_days_list = schedule.get_week_days_list()
+                    if current_weekday not in week_days_list:
+                        continue
+                
+                # Créer la session si elle n'existe pas
+                WorkSession.objects.get_or_create(
+                    model=assignment.model,
+                    schedule_assignment=assignment,
+                    date=selected_date,
+                    defaults={
+                        'status': WorkSession.Status.PENDING,
+                        'created_by': request.user
+                    }
+                )
+        
+        # Recharger toutes les sessions après création
+        sessions = WorkSession.objects.filter(
+            date=selected_date
+        ).select_related('model', 'model__agency', 'schedule_assignment', 'schedule_assignment__schedule').order_by('model__agency__name', 'schedule_assignment__schedule__start_time', 'model__first_name')
+        
+    elif agency:
         assignments = ScheduleAssignment.objects.filter(
             schedule__agency=agency,
             is_active=True
@@ -420,18 +469,26 @@ def work_session_list(request):
         agencies = []
     
     # Précharger les pauses et gains pour éviter N+1 queries
-    session_ids = [s.id for s in sessions]
-    sessions = WorkSession.objects.filter(
-        id__in=session_ids
-    ).prefetch_related('pauses', 'model__gains').select_related('model', 'schedule_assignment__schedule')
+    if sessions:
+        if isinstance(sessions, list):
+            session_ids = [s.id for s in sessions]
+            sessions = WorkSession.objects.filter(
+                id__in=session_ids
+            ).prefetch_related('pauses', 'model__gains').select_related('model', 'model__agency', 'schedule_assignment__schedule')
+        else:
+            # Si c'est déjà un queryset, juste ajouter les relations
+            sessions = sessions.prefetch_related('pauses', 'model__gains').select_related('model', 'model__agency', 'schedule_assignment__schedule')
+    
+    # Convertir en liste pour les calculs
+    sessions_list = list(sessions) if sessions else []
     
     # Calculer les compteurs après avoir préchargé les sessions
-    late_count = sum(1 for s in sessions if s.late_minutes > 0)
-    absent_count = sum(1 for s in sessions if s.status == WorkSession.Status.ABSENT)
-    absent_approved_count = sum(1 for s in sessions if s.status == WorkSession.Status.ABSENT_APPROVED)
+    late_count = sum(1 for s in sessions_list if s.late_minutes > 0)
+    absent_count = sum(1 for s in sessions_list if s.status == WorkSession.Status.ABSENT)
+    absent_approved_count = sum(1 for s in sessions_list if s.status == WorkSession.Status.ABSENT_APPROVED)
     
     # Calculer les totaux pour chaque session
-    for session in sessions:
+    for session in sessions_list:
         session.total_break_hours = session.calculate_total_break_time()
         session.current_worked_hours = session.calculate_worked_hours()
         session.total_presence_hours = session.calculate_total_presence_time()
@@ -452,9 +509,10 @@ def work_session_list(request):
         ]
     
     context = {
-        'sessions': sessions,
+        'sessions': sessions_list,
         'agencies': agencies,
         'agency': agency,
+        'show_all_agencies': show_all_agencies,
         'selected_date': selected_date,
         'late_count': late_count,
         'absent_count': absent_count,

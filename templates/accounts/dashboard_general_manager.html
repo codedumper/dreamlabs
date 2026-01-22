@@ -275,59 +275,108 @@
         </form>
     </div>
 
-    <!-- Indicadores globales - Une seule ligne -->
+    <!-- Indicadores del día -->
     <div class="row mb-4 g-3">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card stat-card stat-success h-100">
                 <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-cash-stack"></i> Ganancia Total</h6>
-                    <div class="stat-value">${{ total_gain|floatformat:0 }}</div>
-                    <div class="stat-currency">COP</div>
+                    <h6 class="card-title"><i class="bi bi-cash-stack"></i> Ganancia Total del Día</h6>
+                    <div class="stat-value">${{ total_gain_today|floatformat:0 }}</div>
+                    <div class="stat-currency">COP - {{ today|date:"d/m/Y" }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2">
             <div class="card stat-card stat-info h-100">
                 <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-person-check"></i> Ganancia Modelos</h6>
-                    <div class="stat-value">${{ total_model_gain|floatformat:0 }}</div>
-                    <div class="stat-currency">COP</div>
+                    <h6 class="card-title"><i class="bi bi-calendar-event"></i> Total Sesiones</h6>
+                    <div class="stat-value">{{ total_sessions_today }}</div>
+                    <div class="stat-currency">Hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-{% if late_count_today > 0 %}warning{% else %}secondary{% endif %} h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-clock-history"></i> Con Retraso</h6>
+                    <div class="stat-value">{{ late_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-{% if absent_count_today > 0 %}danger{% else %}secondary{% endif %} h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-x-circle"></i> Ausentes</h6>
+                    <div class="stat-value">{{ absent_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card stat-{% if absent_approved_count_today > 0 %}info{% else %}secondary{% endif %} h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-check-circle"></i> Ausentes Aprobadas</h6>
+                    <div class="stat-value">{{ absent_approved_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats détaillées des sessions -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-2">
+            <div class="card stat-card stat-success h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-check-circle"></i> Completadas</h6>
+                    <div class="stat-value">{{ completed_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-primary h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-play-circle"></i> Iniciadas</h6>
+                    <div class="stat-value">{{ started_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2">
             <div class="card stat-card stat-warning h-100">
                 <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-bank"></i> Impuestos</h6>
-                    <div class="stat-value">${{ total_bank_fees|floatformat:0 }}</div>
-                    <div class="stat-currency">COP</div>
+                    <h6 class="card-title"><i class="bi bi-pause-circle"></i> En Pausa</h6>
+                    <div class="stat-value">{{ on_break_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2">
-            <div class="card stat-card stat-danger h-100">
+            <div class="card stat-card stat-warning h-100">
                 <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-arrow-down-circle"></i> Otros Gastos</h6>
-                    <div class="stat-value">${{ total_other_expenses|floatformat:0 }}</div>
-                    <div class="stat-currency">COP</div>
+                    <h6 class="card-title"><i class="bi bi-cup"></i> En Descanso</h6>
+                    <div class="stat-value">{{ on_meal_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-info h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-chat-dots"></i> En Coaching</h6>
+                    <div class="stat-value">{{ on_coaching_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2">
             <div class="card stat-card stat-secondary h-100">
                 <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-currency-dollar"></i> Salarios</h6>
-                    <div class="stat-value">${{ total_salaries|floatformat:0 }}</div>
-                    <div class="stat-currency">COP</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card stat-card stat-{% if company_gain >= 0 %}primary{% else %}dark{% endif %} h-100">
-                <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-building"></i> Ganancia Empresa</h6>
-                    <div class="stat-value">${{ company_gain|floatformat:0 }}</div>
-                    <div class="stat-currency">COP</div>
+                    <h6 class="card-title"><i class="bi bi-hourglass"></i> Pendientes</h6>
+                    <div class="stat-value">{{ pending_count_today }}</div>
+                    <div class="stat-currency">Sesiones</div>
                 </div>
             </div>
         </div>
@@ -444,50 +493,5 @@
         </div>
     </div>
 
-    <!-- Comparación por agencia -->
-    <div class="table-card">
-        <div class="card-header">
-            <h6><i class="bi bi-bar-chart"></i> Comparación por Agencia</h6>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table compact-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Agencia</th>
-                            <th class="text-end">Ganancia Total</th>
-                            <th class="text-end">Ganancia Modelos</th>
-                            <th class="text-end">Impuestos</th>
-                            <th class="text-end">Otros Gastos</th>
-                            <th class="text-end">Salarios</th>
-                            <th class="text-end">Ganancia Empresa</th>
-                            <th class="text-center">Modelos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for data in agencies_data %}
-                        <tr>
-                            <td>
-                                <strong>{{ data.agency.name }}</strong>
-                                <br><small class="text-muted">{{ data.agency.code }}</small>
-                            </td>
-                            <td class="text-end table-gain-total">${{ data.gain|floatformat:0 }}</td>
-                            <td class="text-end table-gain-modelos">${{ data.model_gain|floatformat:0 }}</td>
-                            <td class="text-end table-impuestos">${{ data.bank_fees|floatformat:0 }}</td>
-                            <td class="text-end table-otros-gastos">${{ data.other_expenses|floatformat:0 }}</td>
-                            <td class="text-end table-salarios">${{ data.salaries|floatformat:0 }}</td>
-                            <td class="text-end table-ganancia-empresa {% if data.company_gain < 0 %}negative{% endif %}">
-                                ${{ data.company_gain|floatformat:0 }}
-                            </td>
-                            <td class="text-center">
-                                <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 20px; font-weight: 600;">{{ data.active_models }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
