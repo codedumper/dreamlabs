@@ -1056,10 +1056,9 @@ def worked_hours_bulk_create(request):
         selected_date = timezone.now().date()
         messages.warning(request, _('Fecha inválida, usando fecha actual.'))
     
-    # Récupérer tous les modèles actifs de l'agence
-    active_models = Model.objects.filter(
-        agency=agency,
-        status=Model.Status.ACTIVE
+    # Récupérer tous les modèles actifs de l'agence selon les dates
+    active_models = Model.active_by_dates.filter(
+        agency=agency
     ).order_by('first_name', 'last_name')
     
     # Récupérer les heures déjà enregistrées pour cette date

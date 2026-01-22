@@ -158,7 +158,7 @@ def dashboard_view(request):
                     'other_expenses': agency_other_expenses,
                     'salaries': agency_salaries,
                     'company_gain': agency_company_gain,
-                    'active_models': Model.objects.filter(agency=agency, status=Model.Status.ACTIVE).count(),
+                    'active_models': Model.active_by_dates.filter(agency=agency).count(),
                 })
             
             context.update({
@@ -170,7 +170,7 @@ def dashboard_view(request):
                 'total_salaries': total_salaries,
                 'company_gain': company_gain,
                 'total_agencies': agencies.count(),
-                'total_active_models': Model.objects.filter(status=Model.Status.ACTIVE).count(),
+                'total_active_models': Model.active_by_dates.count(),
             })
             
             return render(request, 'accounts/dashboard_general_manager.html', context)
@@ -211,7 +211,7 @@ def dashboard_view(request):
             balance = revenues - expenses - salaries
             
             # Statistiques des modèles
-            active_models = Model.objects.filter(agency=agency, status=Model.Status.ACTIVE).count()
+            active_models = Model.active_by_dates.filter(agency=agency).count()
             total_worked_hours = WorkedHours.objects.filter(
                 model__agency=agency,
                 date__gte=period_start,

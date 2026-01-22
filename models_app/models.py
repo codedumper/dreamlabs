@@ -3,8 +3,23 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from django.db.models import Q
 
 User = get_user_model()
+
+
+class ActiveModelManager(models.Manager):
+    """Manager personnalisé pour filtrer les modèles actifs selon les dates"""
+    
+    def get_queryset(self):
+        """Retourne uniquement les modèles actifs selon les dates"""
+        today = timezone.now().date()
+        return super().get_queryset().filter(
+            status='ACTIVE',  # Utiliser la valeur directement pour éviter la référence circulaire
+            fecha_ingreso__lt=today,  # Date actuelle > fecha_ingreso
+        ).filter(
+            Q(fecha_retiro__isnull=True) | Q(fecha_retiro__gte=today)  # fecha_retiro est None OU date actuelle <= fecha_retiro
+        )
 
 
 class Model(models.Model):
@@ -147,6 +162,10 @@ class Model(models.Model):
         verbose_name=_('Fecha de desactivación')
     )
     
+    # Managers
+    objects = models.Manager()  # Manager par défaut
+    active_by_dates = ActiveModelManager()  # Manager pour les modèles actifs selon les dates
+    
     class Meta:
         verbose_name = _('Modelo')
         verbose_name_plural = _('Modelos')
@@ -154,6 +173,7 @@ class Model(models.Model):
         indexes = [
             models.Index(fields=['agency', 'status']),
             models.Index(fields=['status']),
+            models.Index(fields=['fecha_ingreso', 'fecha_retiro']),
         ]
     
     def __str__(self):
@@ -165,8 +185,31 @@ class Model(models.Model):
         return f"{self.first_name} {self.last_name}"
     
     def is_active(self):
-        """Vérifie si le modèle est actif"""
+        """Vérifie si le modèle est actif (statut uniquement)"""
         return self.status == self.Status.ACTIVE
+    
+    def is_active_by_dates(self):
+        """
+        Vérifie si le modèle est actif selon les dates d'entrée et de sortie.
+        Un modèle est actif si :
+        - La date actuelle est > fecha_ingreso
+        - ET (fecha_retiro est None OU date actuelle <= fecha_retiro)
+        - ET status == ACTIVE
+        """
+        if self.status != self.Status.ACTIVE:
+            return False
+        
+        today = timezone.now().date()
+        
+        # Vérifier que la date actuelle est > fecha_ingreso
+        if today <= self.fecha_ingreso:
+            return False
+        
+        # Vérifier que fecha_retiro est None OU date actuelle <= fecha_retiro
+        if self.fecha_retiro is not None and today > self.fecha_retiro:
+            return False
+        
+        return True
     
     def deactivate(self):
         """Désactive le modèle"""

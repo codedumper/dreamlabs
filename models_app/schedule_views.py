@@ -278,7 +278,8 @@ def schedule_assignment_create(request):
                 updated_count = 0
                 
                 for model_id in model_ids:
-                    model = get_object_or_404(Model, id=model_id, agency=agency, status=Model.Status.ACTIVE)
+                    # Vérifier que le modèle est actif selon les dates
+                    model = get_object_or_404(Model.active_by_dates, id=model_id, agency=agency)
                     
                     existing = ScheduleAssignment.objects.filter(model=model, schedule=schedule).first()
                     if existing:
@@ -308,10 +309,9 @@ def schedule_assignment_create(request):
             messages.error(request, _('Debe seleccionar al menos un modelo.'))
     
     if agency:
-        # Filtrer les modèles actifs et disponibles (avec fecha_ingreso définie)
-        models = Model.objects.filter(
+        # Filtrer les modèles actifs selon les dates d'entrée et de sortie
+        models = Model.active_by_dates.filter(
             agency=agency,
-            status=Model.Status.ACTIVE,
             fecha_ingreso__isnull=False
         ).order_by('first_name', 'last_name')
         schedules = Schedule.objects.filter(agency=agency, is_active=True).order_by('start_time')

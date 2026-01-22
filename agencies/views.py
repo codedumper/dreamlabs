@@ -52,8 +52,10 @@ def agency_detail(request, agency_id):
     
     # Récupérer les modèles de l'agence
     models = Model.objects.filter(agency=agency).order_by('-created_at')
-    active_models = models.filter(status=Model.Status.ACTIVE)
-    inactive_models = models.filter(status=Model.Status.INACTIVE)
+    # Modèles actifs selon les dates d'entrée et de sortie
+    active_models = Model.active_by_dates.filter(agency=agency).order_by('-created_at')
+    # Modèles inactifs (statut INACTIVE ou dates hors période)
+    inactive_models = models.exclude(id__in=active_models.values_list('id', flat=True))
     
     context = {
         'agency': agency,
