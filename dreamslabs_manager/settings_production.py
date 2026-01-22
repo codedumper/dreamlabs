@@ -169,5 +169,10 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'models_app.views': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }

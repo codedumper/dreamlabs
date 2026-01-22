@@ -531,6 +531,9 @@ def model_detail(request, model_id):
 @agency_required
 def model_create(request):
     """Création d'un modèle"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     # Déterminer l'agence selon le rôle
     agency = None
     can_choose_agency = False
@@ -548,32 +551,53 @@ def model_create(request):
         can_choose_agency = False
     
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email', '')
-        phone = request.POST.get('phone', '')
-        password = request.POST.get('password', '')
-        edad = request.POST.get('edad', '')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+        edad = request.POST.get('edad', '').strip()
         platform = request.POST.get('platform', Model.Platform.FLIRTIFY)
-        cedula = request.POST.get('cedula', '')
-        security_contact_name = request.POST.get('security_contact_name', '')
-        security_contact_phone = request.POST.get('security_contact_phone', '')
-        eps = request.POST.get('eps', '')
-        fecha_ingreso = request.POST.get('fecha_ingreso', '')
-        fecha_retiro = request.POST.get('fecha_retiro', '')
+        cedula = request.POST.get('cedula', '').strip()
+        security_contact_name = request.POST.get('security_contact_name', '').strip()
+        security_contact_phone = request.POST.get('security_contact_phone', '').strip()
+        eps = request.POST.get('eps', '').strip()
+        fecha_ingreso = request.POST.get('fecha_ingreso', '').strip()
+        fecha_retiro = request.POST.get('fecha_retiro', '').strip()
         create_user_account = request.POST.get('create_user_account') == 'on'
         
         # Pour admin/general manager, récupérer l'agence depuis le formulaire
         if can_choose_agency and not agency:
             agency_id = request.POST.get('agency')
             if agency_id:
-                agency = get_object_or_404(Agency, id=agency_id)
+                try:
+                    agency = get_object_or_404(Agency, id=agency_id)
+                except Exception as e:
+                    logger.error(f"Error getting agency {agency_id}: {str(e)}")
+                    messages.error(request, _('Error al seleccionar la agencia.'))
         
-        if first_name and last_name and agency and fecha_ingreso:
+        # Validation détaillée avec messages d'erreur spécifiques
+        validation_errors = []
+        if not first_name:
+            validation_errors.append(_('El nombre es obligatorio.'))
+        if not last_name:
+            validation_errors.append(_('El apellido es obligatorio.'))
+        if not agency:
+            validation_errors.append(_('Debe seleccionar una agencia.'))
+        if not fecha_ingreso:
+            validation_errors.append(_('La fecha de ingreso es obligatoria.'))
+        
+        if validation_errors:
+            for error in validation_errors:
+                messages.error(request, error)
+            logger.warning(f"Validation failed for model creation: {validation_errors}")
+        elif first_name and last_name and agency and fecha_ingreso:
             try:
                 from datetime import datetime
                 fecha_ingreso_date = datetime.strptime(fecha_ingreso, '%Y-%m-%d').date() if fecha_ingreso else None
                 fecha_retiro_date = datetime.strptime(fecha_retiro, '%Y-%m-%d').date() if fecha_retiro else None
+                
+                logger.info(f"Creating model: {first_name} {last_name}, agency: {agency.name}, fecha_ingreso: {fecha_ingreso_date}")
                 
                 model = Model.objects.create(
                     first_name=first_name,
@@ -593,43 +617,52 @@ def model_create(request):
                     status=Model.Status.ACTIVE
                 )
                 
+                logger.info(f"Model created successfully with ID: {model.id}")
+                
                 # Créer un compte utilisateur optionnel
                 if create_user_account:
-                    from django.contrib.auth import get_user_model
-                    from django.utils.crypto import get_random_string
-                    from accounts.models import Role
-                    User = get_user_model()
-                    
-                    # Générer un username unique
-                    username = f"{first_name.lower()}.{last_name.lower()}"
-                    base_username = username
-                    counter = 1
-                    while User.objects.filter(username=username).exists():
-                        username = f"{base_username}{counter}"
-                        counter += 1
-                    
-                    # Générer un mot de passe aléatoire
-                    random_password = get_random_string(length=12)
-                    
-                    # Créer l'utilisateur
-                    modele_role = Role.objects.get(name=Role.RoleType.MODELE)
-                    user = User.objects.create_user(
-                        username=username,
-                        email=email if email else f"{username}@dreamslabs.com",
-                        password=random_password,
-                        role=modele_role,
-                        agency=agency
-                    )
-                    model.user = user
-                    model.save()
-                    messages.info(request, _('Cuenta de usuario creada. El modelo debe cambiar su contraseña al primer inicio de sesión.'))
+                    try:
+                        from django.contrib.auth import get_user_model
+                        from django.utils.crypto import get_random_string
+                        from accounts.models import Role
+                        User = get_user_model()
+                        
+                        # Générer un username unique
+                        username = f"{first_name.lower()}.{last_name.lower()}"
+                        base_username = username
+                        counter = 1
+                        while User.objects.filter(username=username).exists():
+                            username = f"{base_username}{counter}"
+                            counter += 1
+                        
+                        # Générer un mot de passe aléatoire
+                        random_password = get_random_string(length=12)
+                        
+                        # Créer l'utilisateur
+                        modele_role = Role.objects.get(name=Role.RoleType.MODELE)
+                        user = User.objects.create_user(
+                            username=username,
+                            email=email if email else f"{username}@dreamslabs.com",
+                            password=random_password,
+                            role=modele_role,
+                            agency=agency
+                        )
+                        model.user = user
+                        model.save()
+                        logger.info(f"User account created for model {model.id}: {username}")
+                        messages.info(request, _('Cuenta de usuario creada. El modelo debe cambiar su contraseña al primer inicio de sesión.'))
+                    except Exception as e:
+                        logger.error(f"Error creating user account for model: {str(e)}")
+                        messages.warning(request, _('Modelo creado pero hubo un error al crear la cuenta de usuario: {}').format(str(e)))
                 
                 messages.success(request, _('Modelo creado exitosamente.'))
                 return redirect('models_app:detail', model_id=model.id)
+            except ValueError as e:
+                logger.error(f"ValueError creating model: {str(e)}")
+                messages.error(request, _('Error en el formato de los datos: {}').format(str(e)))
             except Exception as e:
+                logger.error(f"Exception creating model: {str(e)}", exc_info=True)
                 messages.error(request, _('Error al crear el modelo: {}').format(str(e)))
-        else:
-            messages.error(request, _('El nombre y apellido son obligatorios.'))
     
     # Préparer le contexte selon le rôle
     if can_choose_agency:
@@ -647,6 +680,26 @@ def model_create(request):
             'agency': agency,
             'can_choose_agency': False,
         }
+    
+    # Si c'est une requête POST avec erreurs, passer les valeurs du formulaire au contexte
+    if request.method == 'POST':
+        context.update({
+            'form_data': {
+                'first_name': request.POST.get('first_name', ''),
+                'last_name': request.POST.get('last_name', ''),
+                'email': request.POST.get('email', ''),
+                'phone': request.POST.get('phone', ''),
+                'edad': request.POST.get('edad', ''),
+                'cedula': request.POST.get('cedula', ''),
+                'security_contact_name': request.POST.get('security_contact_name', ''),
+                'security_contact_phone': request.POST.get('security_contact_phone', ''),
+                'eps': request.POST.get('eps', ''),
+                'fecha_ingreso': request.POST.get('fecha_ingreso', ''),
+                'fecha_retiro': request.POST.get('fecha_retiro', ''),
+                'platform': request.POST.get('platform', Model.Platform.FLIRTIFY),
+                'create_user_account': request.POST.get('create_user_account') == 'on',
+            }
+        })
     
     return render(request, 'models_app/create.html', context)
 

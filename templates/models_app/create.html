@@ -30,6 +30,7 @@
                         <strong>Agencia:</strong> {{ agency.name }} ({{ agency.code }})
                         <br><small class="text-muted">El modelo será asociado automáticamente a esta agencia.</small>
                     </div>
+                    <input type="hidden" name="agency" value="{{ agency.id }}">
                     {% endif %}
                     <div class="row">
                         <div class="col-md-6 mb-3">

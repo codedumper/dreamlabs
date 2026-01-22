@@ -66,6 +66,61 @@
     </div>
 </div>
 
+<!-- Horarios Asignados -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Horarios Asignados</h5>
+            </div>
+            <div class="card-body">
+                {% if schedule_assignments %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Horario</th>
+                                <th>Días</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in schedule_assignments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ assignment.schedule.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ assignment.schedule.start_time|time:"H:i" }} - {{ assignment.schedule.end_time|time:"H:i" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% if assignment.schedule.week_days %}
+                                    <small>{{ assignment.schedule.get_week_days_display }}</small>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Todos</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if assignment.is_active %}success{% else %}secondary{% endif %}">
+                                        {% if assignment.is_active %}Activo{% else %}Inactivo{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center mb-0">
+                    <i class="bi bi-info-circle"></i> No hay horarios asignados.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Actividad reciente -->
 <div class="row">
     <div class="col-md-6">

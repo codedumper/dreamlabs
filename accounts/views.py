@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from .decorators import role_required, general_manager_required
 from .models import Role, User
 from financial.models import Expense, Salary, Revenue
-from models_app.models import Model, ModelGain, WorkedHours, WorkSession
+from models_app.models import Model, ModelGain, WorkedHours, WorkSession, ScheduleAssignment
 from agencies.models import Agency
 
 
@@ -274,6 +274,11 @@ def dashboard_view(request):
             # Dernières heures travaillées
             recent_hours = WorkedHours.objects.filter(model=model).order_by('-date')[:10]
             
+            # Horarios asignados
+            schedule_assignments = ScheduleAssignment.objects.filter(
+                model=model
+            ).select_related('schedule').order_by('schedule__start_time')
+            
             context.update({
                 'model': model,
                 'total_gains': total_gains,
@@ -281,6 +286,7 @@ def dashboard_view(request):
                 'avg_hours': avg_hours,
                 'recent_gains': recent_gains,
                 'recent_hours': recent_hours,
+                'schedule_assignments': schedule_assignments,
             })
             
             return render(request, 'accounts/dashboard_modele.html', context)
