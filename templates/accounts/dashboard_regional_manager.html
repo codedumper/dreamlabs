@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Tablero - Regional Manager - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-speedometer2"></i> Tablero - {{ agency.name }}</h1>
+        <p class="text-muted">Vista consolidada de la agencia</p>
+    </div>
+</div>
+
+<!-- Filtros de período -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="period_start" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="period_start" name="period_start" 
+                               value="{{ period_start|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="period_end" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="period_end" name="period_end" 
+                               value="{{ period_end|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Indicadores clés -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-arrow-up-circle"></i> Ingresos</h5>
+                <h2 class="mb-0">${{ revenues|floatformat:2 }} COP</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-arrow-down-circle"></i> Gastos</h5>
+                <h2 class="mb-0">${{ expenses|floatformat:2 }} COP</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-currency-dollar"></i> Salarios</h5>
+                <h2 class="mb-0">${{ salaries|floatformat:2 }} COP</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white {% if balance >= 0 %}bg-info{% else %}bg-dark{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-calculator"></i> Balance</h5>
+                <h2 class="mb-0">${{ balance|floatformat:2 }} COP</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas adicionales -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-people"></i> Modelos Activos</h5>
+                <h3 class="mb-0">{{ active_models }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-clock"></i> Horas Trabajadas</h5>
+                <h3 class="mb-0">{{ total_worked_hours|floatformat:1 }}h</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-cash-stack"></i> Ganancias Modelos</h5>
+                <h3 class="mb-0">${{ model_gains|floatformat:2 }} COP</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actividad reciente -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-arrow-down-circle"></i> Gastos Recientes</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                <div class="list-group">
+                    {% for expense in recent_expenses %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ expense.date|date:"d/m/Y" }}</strong><br>
+                                <small>{{ expense.category.name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <strong class="text-danger">${{ expense.amount|floatformat:2 }} COP</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No hay gastos recientes</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-arrow-up-circle"></i> Ingresos Recientes</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_revenues %}
+                <div class="list-group">
+                    {% for revenue in recent_revenues %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ revenue.date|date:"d/m/Y" }}</strong><br>
+                                <small>{{ revenue.source.name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <strong class="text-success">${{ revenue.amount|floatformat:2 }} COP</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No hay ingresos recientes</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Modelo - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-plus-circle"></i> Nuevo Modelo</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if can_choose_agency and agencies|length > 0 %}
+                    <div class="mb-3">
+                        <label for="agency" class="form-label">Agencia <span class="text-danger">*</span></label>
+                        <select class="form-select" id="agency" name="agency" required>
+                            <option value="">Seleccionar agencia</option>
+                            {% for ag in agencies %}
+                            <option value="{{ ag.id }}" {% if agency and ag.id == agency.id %}selected{% endif %}>
+                                {{ ag.name }} ({{ ag.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% elif agency %}
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Agencia:</strong> {{ agency.name }} ({{ agency.code }})
+                        <br><small class="text-muted">El modelo será asociado automáticamente a esta agencia.</small>
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_ingreso" class="form-label">Fecha de Ingreso <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="fecha_ingreso" name="fecha_ingreso" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_retiro" class="form-label">Fecha de Retiro</label>
+                            <input type="date" class="form-control" id="fecha_retiro" name="fecha_retiro">
+                            <small class="form-text text-muted">Se establecerá automáticamente al desactivar el modelo</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cedula" class="form-label">Cédula</label>
+                            <input type="text" class="form-control" id="cedula" name="cedula">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edad" class="form-label">Edad</label>
+                            <input type="number" class="form-control" id="edad" name="edad" min="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eps" class="form-label">EPS</label>
+                        <select class="form-select" id="eps" name="eps">
+                            <option value="">Seleccionar EPS</option>
+                            <option value="NUEVA_EPS">Nueva EPS</option>
+                            <option value="SANITAS">Sanitas</option>
+                            <option value="PONAL">Ponal</option>
+                            <option value="FAMISANAR">Famisanar</option>
+                            <option value="SALUD_TOTAL">Salud Total</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="security_contact_name" class="form-label">Nombre del Contacto de Seguridad</label>
+                            <input type="text" class="form-control" id="security_contact_name" name="security_contact_name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="security_contact_phone" class="form-label">Teléfono del Contacto de Seguridad</label>
+                            <input type="text" class="form-control" id="security_contact_phone" name="security_contact_phone">
+                        </div>
+                    </div>
+                    <div class="card border-secondary mb-3">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="mb-0"><i class="bi bi-laptop"></i> Plataforma</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="platform" class="form-label">Plataforma</label>
+                                    <select class="form-select" id="platform" name="platform">
+                                        <option value="FLIRTIFY" selected>Flirtify</option>
+                                    </select>
+                                </div>
+                                {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Visible solo para managers">
+                                    <small class="form-text text-muted">Este campo solo es visible para los managers.</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="create_user_account" name="create_user_account">
+                            <label class="form-check-label" for="create_user_account">
+                                Crear cuenta de usuario para que el modelo pueda consultar sus datos
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Se creará un usuario con el rol "Modèle" que podrá iniciar sesión para ver sus ganancias y horas trabajadas.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'models_app:list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Crear Modelo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

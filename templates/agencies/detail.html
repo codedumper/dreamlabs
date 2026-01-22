@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}{{ agency.name }} - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-building"></i> {{ agency.name }}</h1>
+            <div>
+                <a href="{% url 'agencies:list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                <a href="{% url 'agencies:update' agency.id %}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                <a href="{% url 'agencies:bonus_rule_list' agency.id %}" class="btn btn-info">
+                    <i class="bi bi-gift"></i> Reglas de Bonus
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Agencia</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="30%">Nombre:</th>
+                        <td>{{ agency.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Código:</th>
+                        <td><span class="badge bg-secondary">{{ agency.code }}</span></td>
+                    </tr>
+                    {% if agency.address %}
+                    <tr>
+                        <th>Dirección:</th>
+                        <td>{{ agency.address }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if agency.phone %}
+                    <tr>
+                        <th>Teléfono:</th>
+                        <td>{{ agency.phone }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if agency.email %}
+                    <tr>
+                        <th>Email:</th>
+                        <td><a href="mailto:{{ agency.email }}">{{ agency.email }}</a></td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            <span class="badge bg-{{ agency.is_active|yesno:'success,danger' }}">
+                                {{ agency.is_active|yesno:"Activa,Inactiva" }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Multa por Retraso:</th>
+                        <td>
+                            <span class="badge bg-warning text-dark">
+                                ${{ agency.late_penalty|floatformat:0 }} COP
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Multa por Ausencia:</th>
+                        <td>
+                            <span class="badge bg-danger">
+                                ${{ agency.absence_penalty|floatformat:0 }} COP
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Porcentaje de Ganancia de Modelos:</th>
+                        <td>
+                            <span class="badge bg-info">
+                                {{ agency.model_gain_percentage|floatformat:2 }}%
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Porcentaje de Impuestos:</th>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ agency.bank_fee_percentage|floatformat:2 }}%
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de creación:</th>
+                        <td>{{ agency.created_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Estadísticas</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Total de Modelos:</strong> <span class="badge bg-primary">{{ models_count }}</span></p>
+                <p><strong>Modelos Activos:</strong> <span class="badge bg-success">{{ active_models_count }}</span></p>
+                <p><strong>Modelos Inactivos:</strong> <span class="badge bg-secondary">{{ inactive_models_count }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Modelos de la Agencia</h5>
+                {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
+                <a href="{% url 'models_app:create' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuevo Modelo
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if models %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Plataforma</th>
+                                <th>Estado</th>
+                                <th>Fecha de Creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model in models %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'models_app:detail' model.id %}">
+                                        <strong>{{ model.full_name }}</strong>
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if model.email %}
+                                    <a href="mailto:{{ model.email }}">{{ model.email }}</a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if model.phone %}
+                                    <a href="tel:{{ model.phone }}">{{ model.phone }}</a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ model.get_platform_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if model.status == 'ACTIVE' %}success{% else %}secondary{% endif %}">
+                                        {{ model.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ model.created_at|date:"d/m/Y" }}</td>
+                                <td>
+                                    <a href="{% url 'models_app:detail' model.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
+                                    <a href="{% url 'models_app:update' model.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay modelos registrados en esta agencia.
+                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
+                    <a href="{% url 'models_app:create' %}" class="alert-link">Crear el primer modelo</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

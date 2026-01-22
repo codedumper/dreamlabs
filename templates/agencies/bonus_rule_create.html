@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load l10n %}
+
+{% block title %}Nueva Regla de Bonus - {{ agency.name }} - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-plus-circle"></i> Nueva Regla de Bonus - {{ agency.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre de la Regla <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <small class="form-text text-muted">Descripción de la regla de bonus</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="period_type" class="form-label">Tipo de Período <span class="text-danger">*</span></label>
+                        <select class="form-select" id="period_type" name="period_type" required>
+                            <option value="">Seleccione un período</option>
+                            <option value="DAILY">Diario</option>
+                            <option value="WEEKLY">Semanal</option>
+                            <option value="BIWEEKLY">Quincenal (2 veces al mes)</option>
+                            <option value="MONTHLY">Mensual</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="target_currency" class="form-label">Moneda del Objetivo <span class="text-danger">*</span></label>
+                        <select class="form-select" id="target_currency" name="target_currency" required onchange="updateTargetLabel()">
+                            <option value="COP" selected>COP (Pesos Colombianos)</option>
+                            <option value="USD">USD (Dólares)</option>
+                        </select>
+                        <small class="form-text text-muted">Moneda en la que se define el objetivo</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="target_amount" class="form-label" id="target_amount_label">Objetivo de Ganancia Journalier Medio (COP) <span class="text-danger">*</span></label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="target_amount" 
+                               name="target_amount" 
+                               value="0" 
+                               step="0.01" 
+                               min="0"
+                               required>
+                        <small class="form-text text-muted" id="target_amount_help">Objetivo de ganancia journalier medio. Se calcula sumando todas las ganancias de los días trabajados en la período y dividiendo por el número de días trabajados según el horario del modelo.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="bonus_type" class="form-label">Tipo de Bonus <span class="text-danger">*</span></label>
+                        <select class="form-select" id="bonus_type" name="bonus_type" required onchange="updateBonusValueLabel()">
+                            <option value="">Seleccione un tipo</option>
+                            <option value="PERCENTAGE">Porcentaje de Ganancia Total</option>
+                            <option value="FIXED_AMOUNT">Monto Fijo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="bonus_value" class="form-label" id="bonus_value_label">Valor del Bonus <span class="text-danger">*</span></label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="bonus_value" 
+                               name="bonus_value" 
+                               value="0" 
+                               step="0.01" 
+                               min="0"
+                               required>
+                        <small class="form-text text-muted" id="bonus_value_help">Porcentaje (%) o monto fijo (COP) según el tipo seleccionado</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
+                                Regla activa
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="stop_on_match" name="stop_on_match">
+                            <label class="form-check-label" for="stop_on_match">
+                                Detenerse en esta regla si se aplica
+                            </label>
+                            <small class="form-text text-muted d-block">Si está activado, se detiene la evaluación de reglas después de aplicar esta regla.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'agencies:bonus_rule_list' agency.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Crear Regla
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateTargetLabel() {
+    const currency = document.getElementById('target_currency').value;
+    const label = document.getElementById('target_amount_label');
+    const help = document.getElementById('target_amount_help');
+    
+    if (currency === 'USD') {
+        label.innerHTML = 'Objetivo de Ganancia Journalier Medio (USD) <span class="text-danger">*</span>';
+        help.textContent = 'Objetivo de ganancia journalier medio en USD. Se calcula sumando todas las ganancias de los días trabajados en la período y dividiendo por el número de días trabajados según el horario del modelo.';
+    } else {
+        label.innerHTML = 'Objetivo de Ganancia Journalier Medio (COP) <span class="text-danger">*</span>';
+        help.textContent = 'Objetivo de ganancia journalier medio en COP. Se calcula sumando todas las ganancias de los días trabajados en la período y dividiendo por el número de días trabajados según el horario del modelo.';
+    }
+}
+
+function updateBonusValueLabel() {
+    const bonusType = document.getElementById('bonus_type').value;
+    const label = document.getElementById('bonus_value_label');
+    const help = document.getElementById('bonus_value_help');
+    const input = document.getElementById('bonus_value');
+    
+    if (bonusType === 'PERCENTAGE') {
+        label.textContent = 'Porcentaje (%) *';
+        help.textContent = 'Porcentaje de la ganancia total que se otorgará como bonus';
+        input.step = '0.01';
+        input.max = '100';
+    } else if (bonusType === 'FIXED_AMOUNT') {
+        label.textContent = 'Monto Fijo (COP) *';
+        help.textContent = 'Monto fijo en COP que se otorgará como bonus';
+        input.step = '0.01';
+        input.removeAttribute('max');
+    }
+}
+</script>
+{% endblock %}

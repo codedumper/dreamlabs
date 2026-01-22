@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Sesiones de Trabajo - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-calendar-event"></i> Sesiones de Trabajo</h1>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                    <div class="col-md-3">
+                        <label for="agency" class="form-label">Agencia</label>
+                        <select class="form-select" id="agency" name="agency" onchange="this.form.submit()">
+                            <option value="">Seleccionar agencia</option>
+                            {% for ag in agencies %}
+                            <option value="{{ ag.id }}" {% if agency and ag.id == agency.id %}selected{% endif %}>
+                                {{ ag.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% elif agency %}
+                    <input type="hidden" name="agency" value="{{ agency.id }}">
+                    {% endif %}
+                    <div class="col-md-4">
+                        <label for="date" class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if sessions %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded">
+                            <h3 class="mb-0 text-primary">{{ sessions|length }}</h3>
+                            <small class="text-muted">Total Sesiones</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 {% if late_count > 0 %}bg-warning bg-opacity-10 rounded border border-warning{% else %}bg-light rounded{% endif %}">
+                            <h3 class="mb-0 {% if late_count > 0 %}text-warning{% else %}text-muted{% endif %}">{{ late_count }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-clock-history"></i> Con Retraso
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 {% if absent_count > 0 %}bg-danger bg-opacity-10 rounded border border-danger{% else %}bg-light rounded{% endif %}">
+                            <h3 class="mb-0 {% if absent_count > 0 %}text-danger{% else %}text-muted{% endif %}">{{ absent_count }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-x-circle"></i> Ausentes
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 {% if absent_approved_count > 0 %}bg-info bg-opacity-10 rounded border border-info{% else %}bg-light rounded{% endif %}">
+                            <h3 class="mb-0 {% if absent_approved_count > 0 %}text-info{% else %}text-muted{% endif %}">{{ absent_approved_count }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-check-circle"></i> Ausentes Aprobadas
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Sesiones del {{ selected_date|date:"d/m/Y" }}{% if agency %} - {{ agency.name }}{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Horario</th>
+                                <th>Estado</th>
+                                <th>Llegada</th>
+                                <th>Pausas</th>
+                                <th>Comida</th>
+                                <th>Coaching</th>
+                                <th>Total Pausa</th>
+                                <th>Total Trabajado</th>
+                                <th>Total Presencia</th>
+                                <th>Ganancia</th>
+                                <th>Multas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in sessions %}
+                            <tr {% if session.is_active %}class="table-info"{% endif %}>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if session.is_active %}
+                                        <span class="badge bg-success me-2" title="Sesión en curso">
+                                            <i class="bi bi-circle-fill"></i>
+                                        </span>
+                                        {% endif %}
+                                        <strong>{{ session.model.full_name }}</strong>
+                                    </div>
+                                    {% if session.status == 'ABSENT' %}
+                                    <span class="badge bg-danger ms-2">
+                                        <i class="bi bi-x-circle"></i> Ausente
+                                    </span>
+                                    {% elif session.status == 'ABSENT_APPROVED' %}
+                                    <span class="badge bg-info ms-2">
+                                        <i class="bi bi-check-circle"></i> Ausente Aprobada
+                                    </span>
+                                    {% elif session.late_minutes > 0 %}
+                                    <span class="badge bg-warning text-dark ms-2">
+                                        <i class="bi bi-clock-history"></i> Retraso: {{ session.late_minutes }} min
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ session.schedule_assignment.schedule.name }}
+                                    <br><small class="text-muted">{{ session.schedule_assignment.schedule.start_time|time:"H:i" }} - {{ session.schedule_assignment.schedule.end_time|time:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if session.status == 'COMPLETED' %}success{% elif session.status == 'STARTED' %}primary{% elif session.status == 'ABSENT' %}danger{% elif session.status == 'ABSENT_APPROVED' %}info{% elif session.status == 'ON_BREAK' or session.status == 'ON_MEAL' or session.status == 'ON_COACHING' %}warning{% else %}secondary{% endif %}">
+                                        {{ session.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if session.actual_arrival_time %}
+                                    {{ session.actual_arrival_time|time:"H:i" }}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% with breaks=session.pauses_list|filter_pause_type:"BREAK" %}
+                                    {% if breaks %}
+                                    {% for pause in breaks %}
+                                    <div class="mb-1">
+                                        <small>{{ pause.start_time|time:"H:i" }}</small>
+                                        {% if pause.end_time %}
+                                        <small>→ {{ pause.end_time|time:"H:i" }}</small>
+                                        {% else %}
+                                        <span class="badge bg-warning badge-sm">En curso</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with meals=session.pauses_list|filter_pause_type:"MEAL" %}
+                                    {% if meals %}
+                                    {% for pause in meals %}
+                                    <div class="mb-1">
+                                        <small>{{ pause.start_time|time:"H:i" }}</small>
+                                        {% if pause.end_time %}
+                                        <small>→ {{ pause.end_time|time:"H:i" }}</small>
+                                        {% else %}
+                                        <span class="badge bg-warning badge-sm">En curso</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with coachings=session.pauses_list|filter_pause_type:"COACHING" %}
+                                    {% if coachings %}
+                                    {% for pause in coachings %}
+                                    <div class="mb-1">
+                                        <small>{{ pause.start_time|time:"H:i" }}</small>
+                                        {% if pause.end_time %}
+                                        <small>→ {{ pause.end_time|time:"H:i" }}</small>
+                                        {% else %}
+                                        <span class="badge bg-warning badge-sm">En curso</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if session.total_break_hours %}
+                                    <strong>{{ session.total_break_hours|hours_to_hhmm }}</strong>
+                                    {% else %}
+                                    <span class="text-muted">00:00:00</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.current_worked_hours %}
+                                    <strong>{{ session.current_worked_hours|hours_to_hhmm }}</strong>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.total_presence_hours %}
+                                    <strong>{{ session.total_presence_hours|hours_to_hhmm }}</strong>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.session_gain_amount_usd or session.session_gain_amount %}
+                                    <div>
+                                        {% if session.session_gain_amount_usd %}
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-currency-dollar"></i> ${{ session.session_gain_amount_usd|floatformat:2 }} USD
+                                        </span>
+                                        {% endif %}
+                                        {% if session.session_gain_amount %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-cash-stack"></i> ${{ session.session_gain_amount|floatformat:0 }} COP
+                                        </span>
+                                        {% endif %}
+                                        {% if session.trm_rate %}
+                                        <small class="text-muted d-block mt-1">TRM: {{ session.trm_rate|floatformat:2 }}</small>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.late_penalty_amount > 0 or session.absence_penalty_amount > 0 %}
+                                    <div>
+                                        {% if session.late_penalty_amount > 0 %}
+                                        <span class="badge bg-warning text-dark mb-1">
+                                            <i class="bi bi-clock-history"></i> Retraso: -${{ session.late_penalty_amount|floatformat:0 }} COP
+                                        </span>
+                                        {% endif %}
+                                        {% if session.absence_penalty_amount > 0 %}
+                                        <br><span class="badge bg-danger mt-1">
+                                            <i class="bi bi-x-circle"></i> Ausencia: -${{ session.absence_penalty_amount|floatformat:0 }} COP
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group-vertical btn-group-sm" role="group">
+                                        {% if session.status == 'PENDING' %}
+                                        <form method="post" action="{% url 'models_app:work_session_confirm_presence' session.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="agency" value="{{ agency.id }}">
+                                            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-success mb-1">
+                                                <i class="bi bi-check-circle"></i> Confirmar Presencia
+                                            </button>
+                                        </form>
+                                        <div class="btn-group-vertical btn-group-sm" role="group">
+                                            <form method="post" action="{% url 'models_app:work_session_mark_absent' session.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="agency" value="{{ agency.id }}">
+                                                <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                <input type="hidden" name="approved" value="false">
+                                                <button type="submit" class="btn btn-sm btn-danger mb-1" onclick="return confirm('¿Marcar como ausente? Se aplicará la multa.')">
+                                                    <i class="bi bi-x-circle"></i> Ausente
+                                                </button>
+                                            </form>
+                                            <form method="post" action="{% url 'models_app:work_session_mark_absent' session.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="agency" value="{{ agency.id }}">
+                                                <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                <input type="hidden" name="approved" value="true">
+                                                <button type="submit" class="btn btn-sm btn-info" onclick="return confirm('¿Marcar como ausente aprobada? No se aplicará multa.')">
+                                                    <i class="bi bi-check-circle"></i> Ausente Aprobada
+                                                </button>
+                                            </form>
+                                        </div>
+                                        {% elif session.status == 'STARTED' %}
+                                        <div class="btn-group btn-group-sm mb-1" role="group">
+                                            <button type="button" class="btn btn-sm btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-pause"></i> Iniciar Pausa
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <form method="post" action="{% url 'models_app:work_session_start_break' session.id %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="agency" value="{{ agency.id }}">
+                                                        <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="bi bi-pause"></i> Pausa Normal
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <form method="post" action="{% url 'models_app:work_session_start_meal' session.id %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="agency" value="{{ agency.id }}">
+                                                        <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="bi bi-cup"></i> Pausa Comida
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <form method="post" action="{% url 'models_app:work_session_start_coaching' session.id %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="agency" value="{{ agency.id }}">
+                                                        <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="bi bi-person-check"></i> Coaching
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#completeModal{{ session.id }}">
+                                            <i class="bi bi-check-all"></i> Completar
+                                        </button>
+                                        
+                                        <!-- Modal para completar sesión con ganancia -->
+                                        <div class="modal fade" id="completeModal{{ session.id }}" tabindex="-1" aria-labelledby="completeModalLabel{{ session.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form method="post" action="{% url 'models_app:work_session_complete' session.id %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="agency" value="{{ agency.id }}">
+                                                        <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="completeModalLabel{{ session.id }}">
+                                                                <i class="bi bi-check-all"></i> Completar Sesión: {{ session.model.full_name }}
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label for="gain_amount_usd{{ session.id }}" class="form-label">
+                                                                    Ganancia (USD) <span class="text-danger">*</span>
+                                                                </label>
+                                                                <input type="number" 
+                                                                       class="form-control" 
+                                                                       id="gain_amount_usd{{ session.id }}" 
+                                                                       name="gain_amount_usd" 
+                                                                       step="0.01" 
+                                                                       min="0" 
+                                                                       required
+                                                                       placeholder="0.00"
+                                                                       oninput="updateCopConversion({{ session.id }})">
+                                                                <small class="form-text text-muted">Ingrese el monto de ganancia en USD. La conversión a COP se realizará automáticamente usando el TRM del día.</small>
+                                                                <div id="cop_conversion{{ session.id }}" class="mt-2 text-muted small" style="display: none;">
+                                                                    <i class="bi bi-arrow-right"></i> Aproximadamente: <span id="cop_amount{{ session.id }}">0</span> COP
+                                                                </div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="gain_description{{ session.id }}" class="form-label">Descripción (opcional)</label>
+                                                                <textarea class="form-control" 
+                                                                          id="gain_description{{ session.id }}" 
+                                                                          name="gain_description" 
+                                                                          rows="2" 
+                                                                          placeholder="Descripción de la ganancia..."></textarea>
+                                                            </div>
+                                                            <div class="alert alert-info">
+                                                                <i class="bi bi-info-circle"></i>
+                                                                <strong>Fecha:</strong> {{ session.date|date:"d/m/Y" }}<br>
+                                                                <strong>Horario:</strong> {{ session.schedule_assignment.schedule.name }}<br>
+                                                                <strong>Horas trabajadas:</strong> 
+                                                                {% if session.total_worked_hours %}
+                                                                    {{ session.total_worked_hours|floatformat:2 }}h
+                                                                {% elif session.current_worked_hours %}
+                                                                    {{ session.current_worked_hours|floatformat:2 }}h (estimado)
+                                                                {% else %}
+                                                                    -h
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                <i class="bi bi-x-circle"></i> Cancelar
+                                                            </button>
+                                                            <button type="submit" class="btn btn-success">
+                                                                <i class="bi bi-check-all"></i> Completar Sesión
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% elif session.status == 'ON_BREAK' %}
+                                        <form method="post" action="{% url 'models_app:work_session_end_break' session.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="agency" value="{{ agency.id }}">
+                                            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-play"></i> Finalizar Pausa
+                                            </button>
+                                        </form>
+                                        {% elif session.status == 'ON_MEAL' %}
+                                        <form method="post" action="{% url 'models_app:work_session_end_meal' session.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="agency" value="{{ agency.id }}">
+                                            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-play"></i> Finalizar Comida
+                                            </button>
+                                        </form>
+                                        {% elif session.status == 'ON_COACHING' %}
+                                        <form method="post" action="{% url 'models_app:work_session_end_coaching' session.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="agency" value="{{ agency.id }}">
+                                            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-play"></i> Finalizar Coaching
+                                            </button>
+                                        </form>
+                                        {% elif session.status == 'COMPLETED' %}
+                                        {% if session.total_worked_hours %}
+                                        <span class="badge bg-success mb-1">{{ session.total_worked_hours }}h</span>
+                                        {% endif %}
+                                        <form method="post" action="{% url 'models_app:work_session_reopen' session.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="agency" value="{{ agency.id }}">
+                                            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('¿Está seguro de reabrir esta sesión? Se perderá el registro de finalización.')">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Reabrir
+                                            </button>
+                                        </form>
+                                        {% elif session.status == 'ABSENT' %}
+                                        <form method="post" action="{% url 'models_app:work_session_reactivate_from_absent' session.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="agency" value="{{ agency.id }}">
+                                            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-success mb-1" onclick="return confirm('¿El modelo se ha presentado? Se reactivará la sesión.')">
+                                                <i class="bi bi-check-circle"></i> Se Presentó
+                                            </button>
+                                        </form>
+                                        {% if session.absence_penalty_amount > 0 %}
+                                        <br><span class="badge bg-danger mt-1">-${{ session.absence_penalty_amount|floatformat:0 }} COP</span>
+                                        {% endif %}
+                                        {% elif session.status == 'ABSENT_APPROVED' %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-check-circle"></i> Ausencia Aprobada (Sin Multa)
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> 
+    No hay sesiones de trabajo para esta fecha.
+    {% if agency %}
+    <a href="{% url 'models_app:schedule_assignment_create' %}" class="alert-link">Crear asignaciones de horarios</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Fonction pour mettre à jour la conversion USD vers COP en temps réel
+// Note: Cette conversion est approximative. La conversion réelle se fera côté serveur avec le TRM du jour.
+function updateCopConversion(sessionId) {
+    const usdInput = document.getElementById('gain_amount_usd' + sessionId);
+    const copDisplay = document.getElementById('cop_conversion' + sessionId);
+    const copAmount = document.getElementById('cop_amount' + sessionId);
+    
+    if (usdInput && usdInput.value) {
+        const usdValue = parseFloat(usdInput.value);
+        if (!isNaN(usdValue) && usdValue > 0) {
+            // Utiliser un taux approximatif pour l'affichage (ex: 4000 COP par USD)
+            // La conversion réelle se fera côté serveur avec le TRM du jour
+            const approximateRate = 4000; // Taux approximatif pour l'affichage
+            const approximateCop = usdValue * approximateRate;
+            copAmount.textContent = approximateCop.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            copDisplay.style.display = 'block';
+        } else {
+            copDisplay.style.display = 'none';
+        }
+    } else {
+        copDisplay.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

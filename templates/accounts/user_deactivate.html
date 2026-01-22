@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Desactivar Usuario - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4><i class="bi bi-pause-circle"></i> Desactivar Usuario</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>¿Está seguro de que desea desactivar este usuario?</strong>
+                    <br>El usuario no podrá iniciar sesión hasta que sea reactivado.
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Información del Usuario:</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="30%">Usuario:</th>
+                            <td><strong>{{ target_user.username }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ target_user.email|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nombre:</th>
+                            <td>
+                                {% if target_user.first_name or target_user.last_name %}
+                                {{ target_user.first_name }} {{ target_user.last_name }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Rol:</th>
+                            <td>
+                                {% if target_user.role %}
+                                <span class="badge bg-info">{{ target_user.get_role_display }}</span>
+                                {% else %}
+                                <span class="text-muted">Sin rol</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Agencia:</th>
+                            <td>{{ target_user.agency.name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span class="badge bg-{% if target_user.is_active %}success{% else %}secondary{% endif %}">
+                                    {% if target_user.is_active %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-pause-circle"></i> Desactivar Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

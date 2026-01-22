@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Ingresos - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-arrow-up-circle"></i> Ingresos</h1>
+            {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
+            <a href="{% url 'financial:revenue_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Ingreso
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" 
+                               value="{{ date_from|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" 
+                               value="{{ date_to|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="source" class="form-label">Fuente</label>
+                        <select class="form-select" id="source" name="source">
+                            <option value="">Todas las fuentes</option>
+                            {% for source in sources %}
+                            <option value="{{ source.id }}" {% if selected_source == source.id %}selected{% endif %}>
+                                {{ source.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-funnel"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lista de Ingresos</h5>
+                <span class="badge bg-success">Total: ${{ total|floatformat:2 }} COP</span>
+            </div>
+            <div class="card-body">
+                {% if revenues %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Agencia</th>
+                                <th>Fuente</th>
+                                <th>Monto</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for revenue in revenues %}
+                            <tr>
+                                <td>{{ revenue.date|date:"d/m/Y" }}</td>
+                                <td>{{ revenue.agency.name }}</td>
+                                <td><span class="badge bg-info">{{ revenue.source.name }}</span></td>
+                                <td><strong>${{ revenue.amount|floatformat:2 }} COP</strong></td>
+                                <td>{{ revenue.description|truncatewords:10|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay ingresos registrados.
+                    {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
+                    <a href="{% url 'financial:revenue_create' %}" class="alert-link">Registrar el primer ingreso</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

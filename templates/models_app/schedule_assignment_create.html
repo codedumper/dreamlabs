@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Asignación de Horario - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-plus-circle"></i> Nueva Asignación de Horario</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                    <div class="mb-3">
+                        <label for="agency" class="form-label">Agencia <span class="text-danger">*</span></label>
+                        <select class="form-select" id="agency" name="agency" required onchange="this.form.submit()">
+                            <option value="">Seleccionar agencia</option>
+                            {% for ag in agencies %}
+                            <option value="{{ ag.id }}" {% if agency and ag.id == agency.id %}selected{% endif %}>
+                                {{ ag.name }} ({{ ag.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% elif agency %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Agencia:</strong> {{ agency.name }} ({{ agency.code }})
+                    </div>
+                    {% endif %}
+                    {% if agency %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Nota:</strong> Los horarios se aplicarán automáticamente según los días de la semana definidos en cada horario.
+                        Las sesiones de trabajo se crearán dinámicamente cada día correspondiente.
+                    </div>
+                    <div class="mb-3">
+                        <label for="schedule" class="form-label">Horario <span class="text-danger">*</span></label>
+                        <select class="form-select" id="schedule" name="schedule" required>
+                            <option value="">Seleccionar horario</option>
+                            {% for schedule in schedules %}
+                            <option value="{{ schedule.id }}">
+                                {{ schedule.name }} ({{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Modelos <span class="text-danger">*</span></label>
+                        <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                            {% if models %}
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllModels()">
+                                    <i class="bi bi-check-all"></i> Seleccionar todos
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllModels()">
+                                    <i class="bi bi-x"></i> Deseleccionar todos
+                                </button>
+                            </div>
+                            {% for model in models %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="models" 
+                                       value="{{ model.id }}" id="model_{{ model.id }}">
+                                <label class="form-check-label" for="model_{{ model.id }}">
+                                    {{ model.full_name }}
+                                    {% if model.email %}
+                                    <small class="text-muted">({{ model.email }})</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p class="text-muted">No hay modelos activos disponibles para esta agencia.</p>
+                            {% endif %}
+                        </div>
+                        <small class="form-text text-muted">Seleccione uno o varios modelos para asignar al horario.</small>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'models_app:schedule_assignment_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        {% if agency %}
+                        <button type="submit" class="btn btn-primary" onclick="return validateModelSelection()">
+                            <i class="bi bi-check-circle"></i> Crear Asignaciones
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectAllModels() {
+    document.querySelectorAll('input[name="models"]').forEach(function(checkbox) {
+        checkbox.checked = true;
+    });
+}
+
+function deselectAllModels() {
+    document.querySelectorAll('input[name="models"]').forEach(function(checkbox) {
+        checkbox.checked = false;
+    });
+}
+
+function validateModelSelection() {
+    const selected = document.querySelectorAll('input[name="models"]:checked');
+    if (selected.length === 0) {
+        alert('Debe seleccionar al menos un modelo.');
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Regla de Bonus - {{ agency.name }} - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4><i class="bi bi-exclamation-triangle"></i> Eliminar Regla de Bonus</h4>
+            </div>
+            <div class="card-body">
+                <p>¿Está seguro de que desea eliminar la siguiente regla de bonus?</p>
+                <div class="alert alert-warning">
+                    <strong>{{ bonus_rule.name }}</strong><br>
+                    <small>
+                        Período: {{ bonus_rule.get_period_type_display }}<br>
+                        Objetivo: ${{ bonus_rule.target_amount|floatformat:0 }} COP<br>
+                        Bonus: {% if bonus_rule.bonus_type == 'PERCENTAGE' %}{{ bonus_rule.bonus_value|floatformat:2 }}%{% else %}${{ bonus_rule.bonus_value|floatformat:0 }} COP{% endif %}
+                    </small>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'agencies:bonus_rule_list' agency.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

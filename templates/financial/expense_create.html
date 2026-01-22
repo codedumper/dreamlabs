@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Gasto - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-plus-circle"></i> Nuevo Gasto</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Fecha <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ default_date|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Monto (COP) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   step="0.01" min="0" required>
+                            <span class="input-group-text">COP</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Categoría <span class="text-danger">*</span></label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Seleccionar categoría</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    {% if agencies|length > 1 or user.is_superuser %}
+                    <div class="mb-3">
+                        <label for="agency" class="form-label">Agencia <span class="text-danger">*</span></label>
+                        <select class="form-select" id="agency" name="agency" required>
+                            <option value="">Seleccionar agencia</option>
+                            {% for agency in agencies %}
+                            <option value="{{ agency.id }}" {% if selected_agency and selected_agency.id == agency.id %}selected{% elif not selected_agency and user.agency and user.agency.id == agency.id %}selected{% endif %}>
+                                {{ agency.name }} ({{ agency.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Agencia:</strong> {{ user.agency.name }} ({{ user.agency.code }})
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'financial:expense_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Registrar Gasto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

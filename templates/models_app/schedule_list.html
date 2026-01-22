@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Horarios - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-clock"></i> Horarios</h1>
+            {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' or user.role.name == 'GENERAL_MANAGER' %}
+            <a href="{% url 'models_app:schedule_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Horario
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                    <div class="col-md-12">
+                        <label for="agency" class="form-label">Agencia</label>
+                        <select class="form-select" id="agency" name="agency" onchange="this.form.submit()">
+                            <option value="">Todas las agencias</option>
+                            {% for ag in agencies %}
+                            <option value="{{ ag.id }}" {% if agency and ag.id == agency.id %}selected{% endif %}>
+                                {{ ag.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Lista de Horarios{% if agency %} - {{ agency.name }}{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                {% if schedules %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Agencia</th>
+                                <th>Nombre</th>
+                                <th>Hora de Inicio</th>
+                                <th>Hora de Fin</th>
+                                <th>Días</th>
+                                <th>Descanso Comida</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                            <tr>
+                                <td>{{ schedule.agency.name }}</td>
+                                <td><strong>{{ schedule.name }}</strong></td>
+                                <td>{{ schedule.start_time|time:"H:i" }}</td>
+                                <td>{{ schedule.end_time|time:"H:i" }}</td>
+                                <td>
+                                    {% if schedule.week_days %}
+                                    <small>{{ schedule.get_week_days_display }}</small>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if schedule.meal_break_duration %}
+                                    {{ schedule.meal_break_duration|duration_to_hhmm }}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if schedule.is_active %}success{% else %}secondary{% endif %}">
+                                        {% if schedule.is_active %}Activo{% else %}Inactivo{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' and schedule.agency == user.agency %}
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'models_app:schedule_update' schedule.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'models_app:schedule_delete' schedule.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay horarios registrados.
+                    {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' or user.role.name == 'GENERAL_MANAGER' %}
+                    <a href="{% url 'models_app:schedule_create' %}" class="alert-link">Crear el primer horario</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

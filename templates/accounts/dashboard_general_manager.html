@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Tablero - General Manager - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding-top: 0;
+    }
+    .dashboard-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        margin-top: 20px;
+    }
+    .stat-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    }
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    .stat-card .card-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .stat-card .card-title i {
+        font-size: 1.2rem;
+        opacity: 0.8;
+    }
+    .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .stat-card.stat-success {
+        --gradient-start: #10b981;
+        --gradient-end: #059669;
+    }
+    .stat-card.stat-success .card-title i { color: #10b981; }
+    .stat-card.stat-info {
+        --gradient-start: #3b82f6;
+        --gradient-end: #2563eb;
+    }
+    .stat-card.stat-info .card-title i { color: #3b82f6; }
+    .stat-card.stat-warning {
+        --gradient-start: #f59e0b;
+        --gradient-end: #d97706;
+    }
+    .stat-card.stat-warning .card-title i { color: #f59e0b; }
+    .stat-card.stat-danger {
+        --gradient-start: #ef4444;
+        --gradient-end: #dc2626;
+    }
+    .stat-card.stat-danger .card-title i { color: #ef4444; }
+    .stat-card.stat-secondary {
+        --gradient-start: #6b7280;
+        --gradient-end: #4b5563;
+    }
+    .stat-card.stat-secondary .card-title i { color: #6b7280; }
+    .stat-card.stat-primary {
+        --gradient-start: #8b5cf6;
+        --gradient-end: #7c3aed;
+    }
+    .stat-card.stat-primary .card-title i { color: #8b5cf6; }
+    .stat-card.stat-dark {
+        --gradient-start: #1f2937;
+        --gradient-end: #111827;
+    }
+    .stat-card.stat-dark .card-title i { color: #1f2937; }
+    .stat-card .stat-currency {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px 25px;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    .dashboard-header h4 {
+        color: white;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .dashboard-header small {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .badge-modern {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        color: white;
+    }
+    .filter-card {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+    .table-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+    .table-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 20px;
+    }
+    .table-card .card-header h6 {
+        color: white;
+        font-weight: 700;
+        margin: 0;
+    }
+    .compact-table {
+        font-size: 0.9rem;
+    }
+    .compact-table thead {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    .compact-table th {
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 1rem 0.75rem;
+        border-bottom: 3px solid #dee2e6;
+        color: #495057;
+    }
+    .compact-table tbody tr {
+        transition: all 0.2s;
+    }
+    .compact-table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transform: scale(1.01);
+    }
+    .compact-table td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+    .table-gain-total {
+        color: #10b981 !important;
+        font-weight: 700;
+    }
+    .table-gain-modelos {
+        color: #3b82f6 !important;
+        font-weight: 600;
+    }
+    .table-impuestos {
+        color: #f59e0b !important;
+        font-weight: 600;
+    }
+    .table-otros-gastos {
+        color: #ef4444 !important;
+        font-weight: 600;
+    }
+    .table-salarios {
+        color: #6b7280 !important;
+        font-weight: 600;
+    }
+    .table-ganancia-empresa {
+        color: #8b5cf6 !important;
+        font-weight: 700;
+    }
+    .table-ganancia-empresa.negative {
+        color: #1f2937 !important;
+        font-weight: 700;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 8px 20px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4><i class="bi bi-speedometer2"></i> Tablero General</h4>
+                <small>Vista consolidada de todas las agencias</small>
+            </div>
+            <div>
+                <span class="badge-modern me-2"><i class="bi bi-people"></i> {{ total_active_models }} Modelos</span>
+                <span class="badge-modern"><i class="bi bi-building"></i> {{ total_agencies }} Agencias</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de período -->
+    <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="period_start" class="form-label fw-semibold mb-2">Desde</label>
+                <input type="date" class="form-control" id="period_start" name="period_start" 
+                       value="{{ period_start|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="period_end" class="form-label fw-semibold mb-2">Hasta</label>
+                <input type="date" class="form-control" id="period_end" name="period_end" 
+                       value="{{ period_end|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Indicadores globales - Une seule ligne -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-2">
+            <div class="card stat-card stat-success h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-cash-stack"></i> Ganancia Total</h6>
+                    <div class="stat-value">${{ total_gain|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-info h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-person-check"></i> Ganancia Modelos</h6>
+                    <div class="stat-value">${{ total_model_gain|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-warning h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-bank"></i> Impuestos</h6>
+                    <div class="stat-value">${{ total_bank_fees|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-danger h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-arrow-down-circle"></i> Otros Gastos</h6>
+                    <div class="stat-value">${{ total_other_expenses|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-secondary h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-currency-dollar"></i> Salarios</h6>
+                    <div class="stat-value">${{ total_salaries|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card stat-{% if company_gain >= 0 %}primary{% else %}dark{% endif %} h-100">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-building"></i> Ganancia Empresa</h6>
+                    <div class="stat-value">${{ company_gain|floatformat:0 }}</div>
+                    <div class="stat-currency">COP</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparación por agencia -->
+    <div class="table-card">
+        <div class="card-header">
+            <h6><i class="bi bi-bar-chart"></i> Comparación por Agencia</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table compact-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Agencia</th>
+                            <th class="text-end">Ganancia Total</th>
+                            <th class="text-end">Ganancia Modelos</th>
+                            <th class="text-end">Impuestos</th>
+                            <th class="text-end">Otros Gastos</th>
+                            <th class="text-end">Salarios</th>
+                            <th class="text-end">Ganancia Empresa</th>
+                            <th class="text-center">Modelos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in agencies_data %}
+                        <tr>
+                            <td>
+                                <strong>{{ data.agency.name }}</strong>
+                                <br><small class="text-muted">{{ data.agency.code }}</small>
+                            </td>
+                            <td class="text-end table-gain-total">${{ data.gain|floatformat:0 }}</td>
+                            <td class="text-end table-gain-modelos">${{ data.model_gain|floatformat:0 }}</td>
+                            <td class="text-end table-impuestos">${{ data.bank_fees|floatformat:0 }}</td>
+                            <td class="text-end table-otros-gastos">${{ data.other_expenses|floatformat:0 }}</td>
+                            <td class="text-end table-salarios">${{ data.salaries|floatformat:0 }}</td>
+                            <td class="text-end table-ganancia-empresa {% if data.company_gain < 0 %}negative{% endif %}">
+                                ${{ data.company_gain|floatformat:0 }}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; border-radius: 20px; font-weight: 600;">{{ data.active_models }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

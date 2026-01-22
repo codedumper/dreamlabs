@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Mi Tablero - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-speedometer2"></i> Mi Tablero</h1>
+        <p class="text-muted">Bienvenido, {{ model.full_name }}</p>
+    </div>
+</div>
+
+<!-- Filtros de período -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="period_start" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="period_start" name="period_start" 
+                               value="{{ period_start|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="period_end" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="period_end" name="period_end" 
+                               value="{{ period_end|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Indicadores personales -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-cash-stack"></i> Ganancias Totales</h5>
+                <h2 class="mb-0">${{ total_gains|floatformat:2 }} COP</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-clock"></i> Horas Trabajadas</h5>
+                <h2 class="mb-0">{{ total_hours|floatformat:1 }}h</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-graph-up"></i> Promedio Horas/Día</h5>
+                <h2 class="mb-0">{{ avg_hours|floatformat:1 }}h</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actividad reciente -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-cash-stack"></i> Ganancias Recientes</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_gains %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Monto</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gain in recent_gains %}
+                            <tr>
+                                <td>{{ gain.date|date:"d/m/Y" }}</td>
+                                <td><strong class="text-success">${{ gain.amount|floatformat:2 }} COP</strong></td>
+                                <td>{{ gain.description|truncatewords:5|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No hay ganancias registradas</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-clock"></i> Horas Trabajadas Recientes</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_hours %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Horas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hour in recent_hours %}
+                            <tr>
+                                <td>{{ hour.date|date:"d/m/Y" }}</td>
+                                <td><strong>{{ hour.hours|floatformat:2 }}h</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No hay horas registradas</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

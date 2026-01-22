@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Agencias - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-building"></i> Agencias</h1>
+            {% if user.is_general_manager %}
+            <a href="{% url 'agencies:create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nueva Agencia
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if agencies %}
+<div class="row">
+    {% for agency in agencies %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-building"></i> {{ agency.name }}
+                </h5>
+                <p class="card-text">
+                    <strong>Código:</strong> {{ agency.code }}<br>
+                    {% if agency.phone %}
+                    <strong>Teléfono:</strong> {{ agency.phone }}<br>
+                    {% endif %}
+                    {% if agency.email %}
+                    <strong>Email:</strong> {{ agency.email }}<br>
+                    {% endif %}
+                    <span class="badge bg-{{ agency.is_active|yesno:'success,danger' }}">
+                        {{ agency.is_active|yesno:"Activa,Inactiva" }}
+                    </span>
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'agencies:detail' agency.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> Ver detalles
+                </a>
+                {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                <a href="{% url 'agencies:update' agency.id %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> No hay agencias disponibles.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Modelos - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-people"></i> Modelos</h1>
+            {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
+            <a href="{% url 'models_app:create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Modelo
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' or user.role.name == 'REGIONAL_MANAGER' %}
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="show_inactive" 
+                   onchange="window.location.href='?show_inactive=' + (this.checked ? 'true' : 'false')"
+                   {% if show_inactive %}checked{% endif %}>
+            <label class="form-check-label" for="show_inactive">
+                Mostrar modelos inactivos
+            </label>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if models %}
+<div class="row">
+    {% for model in models %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 {% if model.status == 'INACTIVE' %}border-secondary{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-person"></i> {{ model.full_name }}
+                    {% if model.status == 'INACTIVE' %}
+                    <span class="badge bg-secondary">Inactivo</span>
+                    {% else %}
+                    <span class="badge bg-success">Activo</span>
+                    {% endif %}
+                </h5>
+                <p class="card-text">
+                    <strong>Agencia:</strong> {{ model.agency.name }}<br>
+                    {% if model.email %}
+                    <strong>Email:</strong> {{ model.email }}<br>
+                    {% endif %}
+                    {% if model.phone %}
+                    <strong>Teléfono:</strong> {{ model.phone }}<br>
+                    {% endif %}
+                    {% if model.user %}
+                    <span class="badge bg-info">Tiene cuenta de usuario</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'models_app:detail' model.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> Ver detalles
+                </a>
+                {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' and model.status == 'ACTIVE' and model.agency == user.agency %}
+                <a href="{% url 'models_app:update' model.id %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> No hay modelos disponibles.
+    {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
+    <a href="{% url 'models_app:create' %}" class="alert-link">Crear el primer modelo</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

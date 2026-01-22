@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load models_extras %}
+
+{% block title %}Salarios - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-currency-dollar"></i> Salarios</h1>
+            {% if user.is_superuser or user.role.name == 'REGIONAL_MANAGER' %}
+            <a href="{% url 'financial:salary_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Salario
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" 
+                               value="{{ date_from|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" 
+                               value="{{ date_to|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="employee" class="form-label">Empleado</label>
+                        <select class="form-select" id="employee" name="employee">
+                            <option value="">Todos los empleados</option>
+                            {% for employee in employees %}
+                            <option value="{{ employee.id }}" {% if selected_employee == employee.id %}selected{% endif %}>
+                                {{ employee.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-funnel"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lista de Salarios</h5>
+                <span class="badge bg-danger">Total: ${{ total|floatformat:2 }} COP</span>
+            </div>
+            <div class="card-body">
+                {% if salaries %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha de Pago</th>
+                                <th>Empleado</th>
+                                <th>Período</th>
+                                <th>Monto</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for salary in salaries %}
+                            <tr>
+                                <td>{{ salary.payment_date|date:"d/m/Y" }}</td>
+                                <td>{{ salary.employee.full_name }}</td>
+                                <td>
+                                    <small>{{ salary.period_start|date:"d/m/Y" }} - {{ salary.period_end|date:"d/m/Y" }}</small>
+                                </td>
+                                <td><strong>${{ salary.amount|floatformat:2 }} COP</strong></td>
+                                <td>{{ salary.description|truncatewords:10|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay salarios registrados.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

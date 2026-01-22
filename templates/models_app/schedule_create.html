@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Horario - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-plus-circle"></i> Nuevo Horario</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                    <div class="mb-3">
+                        <label for="agency" class="form-label">Agencia <span class="text-danger">*</span></label>
+                        <select class="form-select" id="agency" name="agency" required>
+                            <option value="">Seleccionar agencia</option>
+                            {% for ag in agencies %}
+                            <option value="{{ ag.id }}" {% if agency and ag.id == agency.id %}selected{% endif %}>
+                                {{ ag.name }} ({{ ag.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% elif agency %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Agencia:</strong> {{ agency.name }} ({{ agency.code }})
+                    </div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre del Horario <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               placeholder="Ej: Matutino, Vespertino, Nocturno" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_time" class="form-label">Hora de Inicio <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_time" class="form-label">Hora de Fin <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Días de la Semana</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_MONDAY" name="week_days" value="MONDAY">
+                                    <label class="form-check-label" for="week_day_MONDAY">Lunes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_TUESDAY" name="week_days" value="TUESDAY">
+                                    <label class="form-check-label" for="week_day_TUESDAY">Martes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_WEDNESDAY" name="week_days" value="WEDNESDAY">
+                                    <label class="form-check-label" for="week_day_WEDNESDAY">Miércoles</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_THURSDAY" name="week_days" value="THURSDAY">
+                                    <label class="form-check-label" for="week_day_THURSDAY">Jueves</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_FRIDAY" name="week_days" value="FRIDAY">
+                                    <label class="form-check-label" for="week_day_FRIDAY">Viernes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_SATURDAY" name="week_days" value="SATURDAY">
+                                    <label class="form-check-label" for="week_day_SATURDAY">Sábado</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="week_day_SUNDAY" name="week_days" value="SUNDAY">
+                                    <label class="form-check-label" for="week_day_SUNDAY">Domingo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Seleccione los días de la semana en que aplica este horario.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meal_break_duration" class="form-label">Duración del Descanso para Comida (HH:MM)</label>
+                        <input type="text" class="form-control" id="meal_break_duration" name="meal_break_duration" 
+                               placeholder="01:00" pattern="[0-9]{1,2}:[0-5][0-9]">
+                        <small class="form-text text-muted">
+                            Duración prevista del descanso para comida. Ej: 01:00 para 1 hora, 00:30 para 30 minutos.
+                            <br><strong>Nota:</strong> El inicio y fin del descanso se registran mediante botones durante la sesión de trabajo.
+                        </small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'models_app:schedule_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Crear Horario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load l10n %}
+
+{% block title %}Reglas de Bonus - {{ agency.name }} - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-gift"></i> Reglas de Bonus - {{ agency.name }}</h1>
+            <div>
+                <a href="{% url 'agencies:detail' agency.id %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Agencia
+                </a>
+                {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                <a href="{% url 'agencies:bonus_rule_create' agency.id %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nueva Regla de Bonus
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> Reglas de Bonus</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <h6><i class="bi bi-info-circle"></i> Funcionamiento de las Reglas de Bonus</h6>
+                    <p class="mb-0">
+                        Las reglas de bonus se aplican en <strong>orden creciente</strong> según el campo "Orden" (menor número = se aplica primero). 
+                        El sistema aplica la <strong>primera regla que corresponde</strong> a la condición. 
+                        <br><br>
+                        <strong>Cálculo del bonus:</strong> Se cuenta el número de días trabajados en la período según el horario del modelo (ej: si el modelo trabaja solo lunes y martes, en una quincena trabaja 4 a 5 días). 
+                        Se calcula la ganancia journalier media sumando todas las ganancias de los días trabajados en la período y dividiendo por el número de días trabajados según el horario. 
+                        La regla se aplica si esta media journalier es >= al objetivo de la regla.
+                        <br><br>
+                        Si una regla tiene la opción "Detenerse en esta regla si se aplica" activada, se detiene la evaluación de reglas después de aplicar esa regla.
+                        <br><strong><i class="bi bi-arrows-move"></i> Puedes arrastrar y soltar las filas para reorganizar el orden.</strong>
+                    </p>
+                </div>
+                {% if bonus_rules %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;"><i class="bi bi-arrows-move"></i></th>
+                                <th>Orden</th>
+                                <th>Nombre</th>
+                                <th>Período</th>
+                                <th>Objetivo</th>
+                                <th>Tipo de Bonus</th>
+                                <th>Valor</th>
+                                <th>Stop/Continue</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bonus-rules-tbody">
+                            {% for rule in bonus_rules %}
+                            <tr data-rule-id="{{ rule.id }}" data-order="{{ rule.order }}" style="cursor: move;">
+                                <td>
+                                    <i class="bi bi-grip-vertical text-muted" style="font-size: 1.2rem;"></i>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ rule.order }}</span>
+                                </td>
+                                <td><strong>{{ rule.name }}</strong></td>
+                                <td>
+                                    <span class="badge bg-info">{{ rule.get_period_type_display }}</span>
+                                </td>
+                                <td>
+                                    ${{ rule.target_amount|floatformat:0|default:"0" }} 
+                                    <span class="badge bg-secondary">{{ rule.get_target_currency_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ rule.get_bonus_type_display }}</span>
+                                </td>
+                                <td>
+                                    {% if rule.bonus_type == 'PERCENTAGE' %}
+                                    {{ rule.bonus_value|floatformat:2 }}%
+                                    {% else %}
+                                    ${{ rule.bonus_value|floatformat:0 }} COP
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rule.stop_on_match %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-stop-circle-fill"></i> Stop
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-arrow-right-circle-fill"></i> Continue
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if rule.is_active %}success{% else %}secondary{% endif %}">
+                                        {% if rule.is_active %}Activa{% else %}Inactiva{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if user.is_superuser or user.role.name == 'GENERAL_MANAGER' %}
+                                    <a href="{% url 'agencies:bonus_rule_update' agency.id rule.id %}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                    <a href="{% url 'agencies:bonus_rule_delete' agency.id rule.id %}" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle"></i> No hay reglas de bonus definidas para esta agencia.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// Fonction pour récupérer le token CSRF depuis les cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('bonus-rules-tbody');
+    if (!tbody) return;
+    
+    const sortable = Sortable.create(tbody, {
+        handle: '.bi-grip-vertical',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        onEnd: function(evt) {
+            // Récupérer tous les IDs dans le nouvel ordre
+            const rows = Array.from(tbody.querySelectorAll('tr[data-rule-id]'));
+            const orders = rows.map((row, index) => {
+                const ruleId = row.getAttribute('data-rule-id');
+                return [parseInt(ruleId), index];
+            });
+            
+            // Mettre à jour les badges d'ordre visuellement
+            rows.forEach((row, index) => {
+                const badge = row.querySelector('.badge.bg-primary');
+                if (badge) {
+                    badge.textContent = index;
+                }
+                row.setAttribute('data-order', index);
+            });
+            
+            // Récupérer le token CSRF
+            const csrftoken = getCookie('csrftoken');
+            
+            // Envoyer la mise à jour au serveur
+            fetch('{% url "agencies:bonus_rule_reorder" agency.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    orders: orders
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Optionnel: afficher un message de succès
+                    console.log('Orden actualizado exitosamente');
+                } else {
+                    console.error('Error:', data.error);
+                    // Recharger la page en cas d'erreur
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                location.reload();
+            });
+        }
+    });
+});
+</script>
+<style>
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #f0f0f0;
+}
+.sortable-chosen {
+    cursor: grabbing !important;
+}
+.sortable-drag {
+    opacity: 0.8;
+}
+#bonus-rules-tbody tr:hover {
+    background-color: #f8f9fa;
+}
+#bonus-rules-tbody tr[data-rule-id] {
+    user-select: none;
+}
+</style>
+{% endblock %}

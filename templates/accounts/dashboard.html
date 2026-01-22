@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Dreamslabs Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Bienvenido, {{ user.get_full_name|default:user.username }}</h5>
+                <p class="card-text">
+                    <strong>Rol:</strong> {{ user.get_role_display|default:"Sin rol asignado" }}<br>
+                    {% if user.agency %}
+                    <strong>Agencia:</strong> {{ user.agency.name }}<br>
+                    {% endif %}
+                    <strong>Email:</strong> {{ user.email|default:"No especificado" }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            El dashboard está en desarrollo. Las funcionalidades se agregarán progresivamente.
+        </div>
+    </div>
+</div>
+{% endblock %}

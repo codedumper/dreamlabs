@@ -1,0 +1,28 @@
+# Service systemd pour Gunicorn - Dreamslabs Manager
+# À placer dans /etc/systemd/system/dreamslabs_manager.service
+# Puis: sudo systemctl daemon-reload
+#      sudo systemctl enable dreamslabs_manager
+#      sudo systemctl start dreamslabs_manager
+
+[Unit]
+Description=Gunicorn daemon for Dreamslabs Manager
+After=network.target postgresql.service
+
+[Service]
+User=thestranger420
+Group=thestranger420
+WorkingDirectory=/var/www/dreamslabs_manager
+Environment="PATH=/var/www/dreamslabs_manager/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=dreamslabs_manager.settings_production"
+ExecStart=/var/www/dreamslabs_manager/venv/bin/gunicorn \
+    --access-logfile - \
+    --workers 3 \
+    --bind unix:/var/www/dreamslabs_manager/gunicorn.sock \
+    --timeout 300 \
+    dreamslabs_manager.wsgi:application
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
