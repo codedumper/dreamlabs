@@ -131,6 +131,14 @@ server {
 }
 EOF
 
+    # Nettoyer les liens symboliques incorrects
+    rm -f /etc/nginx/sites-enabled/sites-available 2>/dev/null || true
+    rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+    rm -f /etc/nginx/sites-enabled/dreamslabs_manager 2>/dev/null || true
+    
+    # Créer le lien symbolique correct
+    ln -sf /etc/nginx/sites-available/dreamslabs_manager /etc/nginx/sites-enabled/dreamslabs_manager
+
     # Test de la configuration
     if nginx -t; then
         systemctl reload nginx

@@ -109,7 +109,17 @@ server {
 }
 EOF
 
-# 3. Vérifier la configuration
+# 3. Nettoyer les liens symboliques incorrects et créer le bon
+info "Nettoyage des liens symboliques Nginx incorrects..."
+rm -f /etc/nginx/sites-enabled/sites-available 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/dreamslabs_manager 2>/dev/null || true
+
+# Créer le lien symbolique correct (vers le fichier, pas le répertoire)
+ln -sf /etc/nginx/sites-available/dreamslabs_manager /etc/nginx/sites-enabled/dreamslabs_manager
+info "✅ Lien symbolique créé"
+
+# 4. Vérifier la configuration
 info "Vérification de la configuration Nginx..."
 if nginx -t; then
     info "✅ Configuration Nginx valide"
@@ -119,12 +129,12 @@ else
     exit 1
 fi
 
-# 4. Recharger Nginx
+# 5. Recharger Nginx
 info "Rechargement de Nginx..."
 systemctl reload nginx
 info "✅ Nginx rechargé"
 
-# 5. Mettre à jour le fichier .env pour activer les paramètres de sécurité
+# 6. Mettre à jour le fichier .env pour activer les paramètres de sécurité
 if [ -f "$PROJECT_DIR/.env" ]; then
     info "Mise à jour du fichier .env pour activer HTTPS..."
     sed -i 's/SECURE_SSL_REDIRECT=.*/SECURE_SSL_REDIRECT=True/' "$PROJECT_DIR/.env" || \

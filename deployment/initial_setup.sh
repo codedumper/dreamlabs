@@ -243,9 +243,15 @@ fi
 # 11. Configuration de Nginx
 info "Configuration de Nginx..."
 if [ -f "deployment/nginx.conf" ]; then
+    # Nettoyer les liens symboliques incorrects
+    sudo rm -f /etc/nginx/sites-enabled/sites-available 2>/dev/null || true
+    sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+    
     sudo cp deployment/nginx.conf /etc/nginx/sites-available/$PROJECT_NAME
-    sudo ln -sf /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/
-    sudo rm -f /etc/nginx/sites-enabled/default
+    
+    # Créer le lien symbolique correctement
+    sudo rm -f /etc/nginx/sites-enabled/$PROJECT_NAME 2>/dev/null || true
+    sudo ln -sf /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/$PROJECT_NAME
     
     # Test de la configuration
     if sudo nginx -t; then

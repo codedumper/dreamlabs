@@ -81,11 +81,15 @@ info "ℹ️  La base de données et l'utilisateur seront créés par initial_se
 # 5. Configuration de Nginx
 info "Configuration de Nginx..."
 if [ -f "$PROJECT_DIR/deployment/nginx.conf" ]; then
-    cp $PROJECT_DIR/deployment/nginx.conf /etc/nginx/sites-available/$PROJECT_NAME
-    ln -sf /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/
+    # Nettoyer les liens symboliques incorrects
+    rm -f /etc/nginx/sites-enabled/sites-available 2>/dev/null || true
+    rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
     
-    # Supprimer la configuration par défaut si elle existe
-    rm -f /etc/nginx/sites-enabled/default
+    cp $PROJECT_DIR/deployment/nginx.conf /etc/nginx/sites-available/$PROJECT_NAME
+    
+    # Créer le lien symbolique correct (vers le fichier, pas le répertoire)
+    rm -f /etc/nginx/sites-enabled/$PROJECT_NAME 2>/dev/null || true
+    ln -sf /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/$PROJECT_NAME
     
     # Test de la configuration Nginx
     nginx -t

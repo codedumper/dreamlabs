@@ -282,12 +282,19 @@ fi
 sudo mkdir -p /etc/nginx/sites-available
 sudo mkdir -p /etc/nginx/sites-enabled
 
+# Nettoyer les liens symboliques incorrects
+info "Nettoyage des liens symboliques Nginx incorrects..."
+sudo rm -f /etc/nginx/sites-enabled/sites-available 2>/dev/null || true
+sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+
 if [ ! -f "/etc/nginx/sites-available/${SERVICE_NAME}" ]; then
     if [ -f "deployment/nginx.conf" ]; then
         warn "Configuration Nginx non trouvée. Création..."
         sudo cp deployment/nginx.conf /etc/nginx/sites-available/${SERVICE_NAME}
-        sudo ln -sf /etc/nginx/sites-available/${SERVICE_NAME} /etc/nginx/sites-enabled/
-        sudo rm -f /etc/nginx/sites-enabled/default
+        
+        # Créer le lien symbolique correctement (vers le fichier, pas le répertoire)
+        sudo rm -f /etc/nginx/sites-enabled/${SERVICE_NAME} 2>/dev/null || true
+        sudo ln -sf /etc/nginx/sites-available/${SERVICE_NAME} /etc/nginx/sites-enabled/${SERVICE_NAME}
         
         # Démarrer Nginx s'il n'est pas actif
         if ! systemctl is-active --quiet nginx; then
@@ -297,10 +304,21 @@ if [ ! -f "/etc/nginx/sites-available/${SERVICE_NAME}" ]; then
         
         # Test de la configuration
         if sudo nginx -t; then
-            sudo systemctl restart nginx
+            sudo systemctl reload nginx
             info "✅ Nginx configuré"
         else
             error "Erreur dans la configuration Nginx!"
+            error "Exécutez: sudo ./deployment/fix_nginx_config.sh pour corriger"
+        fi
+    fi
+else
+    # Vérifier que le lien symbolique est correct
+    if [ -L "/etc/nginx/sites-enabled/${SERVICE_NAME}" ]; then
+        TARGET=$(readlink -f /etc/nginx/sites-enabled/${SERVICE_NAME} 2>/dev/null || echo "")
+        if [ -d "$TARGET" ] || [ "$TARGET" != "/etc/nginx/sites-available/${SERVICE_NAME}" ]; then
+            warn "Lien symbolique incorrect détecté. Correction..."
+            sudo rm -f /etc/nginx/sites-enabled/${SERVICE_NAME}
+            sudo ln -sf /etc/nginx/sites-available/${SERVICE_NAME} /etc/nginx/sites-enabled/${SERVICE_NAME}
         fi
     fi
 fi

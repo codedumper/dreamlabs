@@ -151,7 +151,18 @@ certbot delete --cert-name "$DOMAIN" --non-interactive 2>/dev/null || true
 # Attendre un peu pour que Let's Encrypt nettoie les anciennes autorisations
 sleep 5
 
-# 6. Obtenir le certificat avec HTTP-01 (automatique)
+# 6. Nettoyer les liens symboliques Nginx incorrects
+info "Nettoyage des liens symboliques Nginx incorrects..."
+rm -f /etc/nginx/sites-enabled/sites-available 2>/dev/null || true
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+
+# S'assurer que le lien symbolique correct existe
+if [ -f "/etc/nginx/sites-available/dreamslabs_manager" ]; then
+    rm -f /etc/nginx/sites-enabled/dreamslabs_manager 2>/dev/null || true
+    ln -sf /etc/nginx/sites-available/dreamslabs_manager /etc/nginx/sites-enabled/dreamslabs_manager
+fi
+
+# 7. Obtenir le certificat avec HTTP-01 (automatique)
 info "Obtention du certificat avec HTTP-01..."
 info "Certbot va automatiquement configurer Nginx pour la validation..."
 
