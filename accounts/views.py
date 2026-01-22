@@ -161,6 +161,52 @@ def dashboard_view(request):
                     'active_models': Model.active_by_dates.filter(agency=agency).count(),
                 })
             
+            # Liste des modèles qui travaillent aujourd'hui (ou date sélectionnée)
+            working_date_str = request.GET.get('working_date')
+            if working_date_str:
+                try:
+                    working_date = datetime.strptime(working_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    working_date = timezone.now().date()
+            else:
+                working_date = timezone.now().date()
+            
+            # Filtrer par agence si spécifiée (pour General Manager)
+            working_agency_id = request.GET.get('working_agency')
+            working_agency = None
+            if working_agency_id:
+                try:
+                    working_agency = Agency.objects.get(id=working_agency_id)
+                except Agency.DoesNotExist:
+                    working_agency = None
+            
+            # Récupérer les sessions de travail pour cette date
+            if working_agency:
+                work_sessions = WorkSession.objects.filter(
+                    model__agency=working_agency,
+                    date=working_date
+                ).select_related('model', 'schedule_assignment', 'schedule_assignment__schedule').order_by('model__first_name', 'model__last_name')
+            else:
+                # Toutes les agences
+                work_sessions = WorkSession.objects.filter(
+                    date=working_date
+                ).select_related('model', 'model__agency', 'schedule_assignment', 'schedule_assignment__schedule').order_by('model__agency__name', 'model__first_name', 'model__last_name')
+            
+            # Récupérer les modèles uniques qui travaillent ce jour
+            working_models = Model.objects.filter(
+                id__in=work_sessions.values_list('model_id', flat=True).distinct()
+            ).order_by('agency__name', 'first_name', 'last_name')
+            
+            # Préparer les données des modèles avec leurs sessions
+            working_models_data = []
+            for model in working_models:
+                model_sessions = work_sessions.filter(model=model)
+                working_models_data.append({
+                    'model': model,
+                    'sessions': model_sessions,
+                    'sessions_count': model_sessions.count(),
+                })
+            
             context.update({
                 'agencies_data': agencies_data,
                 'total_gain': total_gain,
@@ -171,6 +217,10 @@ def dashboard_view(request):
                 'company_gain': company_gain,
                 'total_agencies': agencies.count(),
                 'total_active_models': Model.active_by_dates.count(),
+                'working_date': working_date,
+                'working_agency': working_agency,
+                'working_models_data': working_models_data,
+                'agencies': agencies,  # Pour le sélecteur d'agence
             })
             
             return render(request, 'accounts/dashboard_general_manager.html', context)
